@@ -18,6 +18,7 @@ HEADERS += \
 FORMS += \
     mainwindow.ui
 
+INCLUDEPATH += "/home/brometheus/Documents/Libraries/sqlite-amalgamation-3510000/"
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin
