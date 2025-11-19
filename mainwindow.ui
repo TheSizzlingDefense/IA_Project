@@ -171,13 +171,6 @@
        </spacer>
       </item>
       <item>
-       <widget class="QPushButton" name="share_deck">
-        <property name="text">
-         <string>Share Deck</string>
-        </property>
-       </widget>
-      </item>
-      <item>
        <widget class="QPushButton" name="create_deck">
         <property name="text">
          <string>Create Deck</string>
