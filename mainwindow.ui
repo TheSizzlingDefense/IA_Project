@@ -56,13 +56,6 @@
          </widget>
         </item>
         <item alignment="Qt::AlignmentFlag::AlignTop">
-         <widget class="QPushButton" name="browse_words">
-          <property name="text">
-           <string>Browse</string>
-          </property>
-         </widget>
-        </item>
-        <item alignment="Qt::AlignmentFlag::AlignTop">
          <widget class="QPushButton" name="access_stats">
           <property name="text">
            <string>Stats</string>
