@@ -8,7 +8,6 @@ DeckWindow::DeckWindow(QWidget *parent)
     ui->setupUi(this);
 }
 
-DeckWindow::~DeckWindow()
-{
+DeckWindow::~DeckWindow() {
     delete ui;
 }

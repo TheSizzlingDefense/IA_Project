@@ -20,6 +20,8 @@ public:
 private slots:
     void on_access_decks_clicked();
 
+    void on_add_word_clicked();
+
 private:
     Ui::MainWindow *ui;
 };
