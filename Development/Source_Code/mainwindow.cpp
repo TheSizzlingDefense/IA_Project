@@ -24,3 +24,8 @@ void MainWindow::on_add_word_clicked() {
     addCardWindow.exec();
 }
 
+
+void MainWindow::on_create_deck_clicked() {
+
+}
+

@@ -10,11 +10,13 @@ CONFIG += c++17
 
 SOURCES += \
     addcardwindow.cpp \
+    database.cpp \
     main.cpp \
     mainwindow.cpp
 
 HEADERS += \
     addcardwindow.h \
+    database.h \
     mainwindow.h
 
 FORMS += \
@@ -24,3 +26,5 @@ FORMS += \
 qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
+
+INCLUDEPATH += /home/brometheus/IA_Project/Development/Source_Code/sqlite-amalgamation-3510000

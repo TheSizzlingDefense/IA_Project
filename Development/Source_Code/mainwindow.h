@@ -22,6 +22,8 @@ private slots:
 
     void on_add_word_clicked();
 
+    void on_create_deck_clicked();
+
 private:
     Ui::MainWindow *ui;
 };
