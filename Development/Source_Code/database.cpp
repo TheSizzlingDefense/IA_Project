@@ -10,8 +10,12 @@ dataBase::dataBase(const std::string& dbPath) {
 
     enableForeignKeys();
     createListTable();
+    createWordsTable();
 }
 
+dataBase::~dataBase() {
+
+}
 void dataBase::enableForeignKeys() {
     char* errorMessage = nullptr;
 
@@ -28,11 +32,11 @@ void dataBase::enableForeignKeys() {
 bool dataBase::createListTable() {
     const char* sql =
         "CREATE TABLE IF NOT EXISTS lists ("
-        "list_id INTEGER PRIMARY KEY AUTOINCREMENT,"    // Unique ID for each list
-        "list_name TEXT NOT, NULL"      // Name the user sees when list is displayed
+        "list_id INTEGER PRIMARY KEY AUTOINCREMENT, "    // Unique ID for each list
+        "list_name TEXT NOT NULL, "      // Name the user sees when list is displayed
         "description TEXT, "          // Description of what the list contains
         "language TEXT, "             // Language of study
-        "created_date DATETIME DEFAULT CURRENT_TIMESTAMP, "   // Date the list was created
+        "created_date DATETIME DEFAULT CURRENT_TIMESTAMP "   // Date the list was created
         ");";
 
     char* errorMessage = nullptr;
@@ -58,7 +62,7 @@ bool dataBase::createWordsTable() {
         "language TEXT DEFAULT 'en', "
         "difficulty_level INTEGER CHECK(difficulty_level BETWEEN 1 AND 5), "
         "date_added DATETIME DEFAULT CURRENT_TIMESTAMP, "
-        "tags TEXT, "
+        "tags TEXT "
         ");";
 
     char* errorMessage = nullptr;
