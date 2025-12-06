@@ -1,9 +1,7 @@
 QT       += core gui
-
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 CONFIG += c++17
-
 # You can make your code fail to compile if it uses deprecated APIs.
 # In order to do so, uncomment the following line.
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
@@ -12,12 +10,14 @@ SOURCES += \
     addcardwindow.cpp \
     database.cpp \
     main.cpp \
-    mainwindow.cpp
+    mainwindow.cpp \
+    sqlite3.c
 
 HEADERS += \
     addcardwindow.h \
     database.h \
-    mainwindow.h
+    mainwindow.h \
+    sqlite3.h
 
 FORMS += \
     addcardwindow.ui \
@@ -26,5 +26,3 @@ FORMS += \
 qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
-
-INCLUDEPATH += /home/brometheus/IA_Project/Development/Source_Code/sqlite-amalgamation-3510000
