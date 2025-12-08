@@ -15,6 +15,9 @@ public:
     explicit AddCardWindow(QWidget *parent = nullptr);
     ~AddCardWindow();
 
+private slots:
+    void on_cancelButton_clicked();
+
 private:
     Ui::AddCardWindow *ui;
 };

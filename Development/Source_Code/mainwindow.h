@@ -19,12 +19,7 @@ public:
     ~MainWindow();
 
 private slots:
-    void on_access_decks_clicked();
-
-    void on_add_word_clicked();
-
-    void on_create_deck_clicked();
-
+    void on_addWord_clicked();
 
 private:
     Ui::MainWindow *ui;

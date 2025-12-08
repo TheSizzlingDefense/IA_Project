@@ -10,7 +10,7 @@ DataBase::DataBase(const std::string& dbPath) {
     }
 
     enableForeignKeys();
-    createListTable();
+    createVocabListTable();
     createWordsTable();
     createListWordTable();
     createStudySessionTable();
@@ -22,15 +22,11 @@ DataBase::DataBase(const std::string& dbPath) {
 
 DataBase::~DataBase() {
     if (db != nullptr) {
-        // Finalize any remaining prepared statements (if tracking them)
-        // Note: In a more robust implementation, you'd track all statements
 
-        // Close the database connection
         int rc = sqlite3_close(db);
 
-        // If close fails (e.g., unfinalized statements), force close
         if (rc != SQLITE_OK) {
-            sqlite3_close_v2(db);  // Force close even with active statements
+            sqlite3_close_v2(db);
         }
 
         db = nullptr;
@@ -49,14 +45,14 @@ void DataBase::enableForeignKeys() {
     }
 }
 
-bool DataBase::createListTable() {
+bool DataBase::createVocabListTable() {
     const char* sql =
-        "CREATE TABLE IF NOT EXISTS lists ("
-        "list_id INTEGER PRIMARY KEY AUTOINCREMENT, "    // Unique ID for each list
-        "list_name TEXT NOT NULL, "      // Name the user sees when list is displayed
-        "description TEXT, "          // Description of what the list contains
-        "language TEXT, "             // Language of study
-        "created_date DATETIME DEFAULT CURRENT_TIMESTAMP "   // Date the list was created
+        "CREATE TABLE IF NOT EXISTS vocabulary_lists ("
+        "list_id INTEGER PRIMARY KEY AUTOINCREMENT, "
+        "list_name TEXT NOT NULL, "
+        "description TEXT, "
+        "language TEXT, "
+        "created_date DATETIME DEFAULT CURRENT_TIMESTAMP "
         ");";
 
     char* errorMessage = nullptr;
@@ -108,7 +104,7 @@ bool DataBase::createListWordTable() {
         "order_index INTEGER, "
         "mastery_level INTEGER CHECK(mastery_level BETWEEN 0 AND 5), "
         "is_active BOOLEAN DEFAULT 1, "
-        "FOREIGN KEY (list_id) REFERENCES word_lists(list_id) ON DELETE CASCADE, "
+        "FOREIGN KEY (list_id) REFERENCES vocabulary_lists(list_id) ON DELETE CASCADE, "
         "FOREIGN KEY (word_id) REFERENCES words(word_id) ON DELETE CASCADE, "
         "UNIQUE(list_id, word_id)"
         ");";
@@ -250,7 +246,7 @@ bool DataBase::createExampleTable() {
 
 bool DataBase::createListProgressTable() {
     const char* sql =
-        "CREATE TABLE IF NOT EXISTS list_progress ( "
+        "CREATE TABLE IF NOT EXISTS progress_list ( "
         "progress_id INTEGER PRIMARY KEY, "
         "user_id INTEGER, "
         "list_id INTEGER NOT NULL, "
@@ -263,7 +259,7 @@ bool DataBase::createListProgressTable() {
         "current_streak INTEGER NOT NULL DEFAULT 0, "
         "best_streak INTEGER NOT NULL DEFAULT 0, "
         "FOREIGN KEY (user_id) REFERENCES users(user_id), "
-        "FOREIGN KEY (list_id) REFERENCES word_lists(list_id), "
+        "FOREIGN KEY (list_id) REFERENCES vocabulary_lists(list_id), "
         "UNIQUE(user_id, list_id)"
         ");";
 
@@ -278,9 +274,9 @@ bool DataBase::createListProgressTable() {
     }
 
     const char* indexSql =
-        "CREATE INDEX IF NOT EXISTS idx_list_progress_user_id ON list_progress(user_id); "
-        "CREATE INDEX IF NOT EXISTS idx_list_progress_list_id ON list_progress(list_id); "
-        "CREATE INDEX IF NOT EXISTS idx_list_progress_last_studied ON list_progress(last_studied);";
+        "CREATE INDEX IF NOT EXISTS idx_list_progress_user_id ON progress_list(user_id); "
+        "CREATE INDEX IF NOT EXISTS idx_list_progress_list_id ON progress_list(list_id); "
+        "CREATE INDEX IF NOT EXISTS idx_list_progress_last_studied ON progress_list(last_studied);";
 
     result = sqlite3_exec(db,indexSql, nullptr, nullptr, &errorMessage);
 

@@ -8,6 +8,7 @@ CONFIG += c++17
 
 SOURCES += \
     addcardwindow.cpp \
+    addlistwindow.cpp \
     database.cpp \
     main.cpp \
     mainwindow.cpp \
@@ -15,12 +16,14 @@ SOURCES += \
 
 HEADERS += \
     addcardwindow.h \
+    addlistwindow.h \
     database.h \
     mainwindow.h \
     sqlite3.h
 
 FORMS += \
     addcardwindow.ui \
+    addlistwindow.ui \
     mainwindow.ui
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin

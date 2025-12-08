@@ -12,3 +12,8 @@ AddCardWindow::~AddCardWindow()
 {
     delete ui;
 }
+
+void AddCardWindow::on_cancelButton_clicked()
+{
+    reject();
+}

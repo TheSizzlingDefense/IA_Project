@@ -14,7 +14,7 @@ public:
 
     void enableForeignKeys();
 
-    bool createListTable();
+    bool createVocabListTable();
 
     bool createWordsTable();
 
