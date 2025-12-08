@@ -2,6 +2,7 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include "database.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -24,7 +25,10 @@ private slots:
 
     void on_create_deck_clicked();
 
+
 private:
     Ui::MainWindow *ui;
+
+    DataBase db;
 };
 #endif // MAINWINDOW_H

@@ -5,13 +5,12 @@ extern "C" {
     #include "sqlite3.h"
 }
 #include <string>
-#include <stdexcept>
 
-class dataBase
+class DataBase
 {
 public:
-    dataBase(const std::string& dbPath);
-    ~dataBase();
+    DataBase(const std::string& dbPath);
+    ~DataBase();
 
     void enableForeignKeys();
 
@@ -20,6 +19,16 @@ public:
     bool createWordsTable();
 
     bool createListWordTable();
+
+    bool createStudySessionTable();
+
+    bool createReviewScheduleTable();
+
+    bool createExampleTable();
+
+    bool createListProgressTable();
+
+    bool createWordRelationTable();
 
 private:
     sqlite3* db;

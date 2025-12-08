@@ -1,9 +1,10 @@
 #include "database.h"
+#include <stdexcept>
 
 
 
-dataBase::dataBase(const std::string& dbPath) {
-    int result = sqlite3_open(dbPath.c_str(), &db);    // Opening the sqlite3 database
+DataBase::DataBase(const std::string& dbPath) {
+    int result = sqlite3_open(dbPath.c_str(), &db);    // Opening the sqlite3 DataBase
     if (result != SQLITE_OK) {
         throw std::runtime_error("Can't open databse: " + std::string(sqlite3_errmsg(db)));
     }
@@ -11,12 +12,31 @@ dataBase::dataBase(const std::string& dbPath) {
     enableForeignKeys();
     createListTable();
     createWordsTable();
+    createListWordTable();
+    createStudySessionTable();
+    createReviewScheduleTable();
+    createExampleTable();
+    createListProgressTable();
+    createWordRelationTable();
 }
 
-dataBase::~dataBase() {
+DataBase::~DataBase() {
+    if (db != nullptr) {
+        // Finalize any remaining prepared statements (if tracking them)
+        // Note: In a more robust implementation, you'd track all statements
 
+        // Close the database connection
+        int rc = sqlite3_close(db);
+
+        // If close fails (e.g., unfinalized statements), force close
+        if (rc != SQLITE_OK) {
+            sqlite3_close_v2(db);  // Force close even with active statements
+        }
+
+        db = nullptr;
+    }
 }
-void dataBase::enableForeignKeys() {
+void DataBase::enableForeignKeys() {
     char* errorMessage = nullptr;
 
     int result = sqlite3_exec(db, "PRAGMA foreign_keys = ON;", nullptr, nullptr, &errorMessage);
@@ -29,7 +49,7 @@ void dataBase::enableForeignKeys() {
     }
 }
 
-bool dataBase::createListTable() {
+bool DataBase::createListTable() {
     const char* sql =
         "CREATE TABLE IF NOT EXISTS lists ("
         "list_id INTEGER PRIMARY KEY AUTOINCREMENT, "    // Unique ID for each list
@@ -52,7 +72,7 @@ bool dataBase::createListTable() {
     return true;
 }
 
-bool dataBase::createWordsTable() {
+bool DataBase::createWordsTable() {
     const char* sql =
         "CREATE TABLE IF NOT EXISTS words ("
         "word_id INTEGER PRIMARY KEY AUTOINCREMENT, "
@@ -78,7 +98,7 @@ bool dataBase::createWordsTable() {
     return true;
 }
 
-bool dataBase::createListWordTable() {
+bool DataBase::createListWordTable() {
     const char* sql =
         "CREATE TABLE IF NOT EXISTS list_words ("
         "list_word_id INTEGER PRIMARY KEY AUTOINCREMENT, "
@@ -106,6 +126,204 @@ bool dataBase::createListWordTable() {
     const char* indexSql =
         "CREATE INDEX IF NOT EXISTS idx_list_words_list_id ON list_words(list_id); "
         "CREATE INDEX IF NOT EXISTS idx_list_words_word_id ON list_words(word_id);";
+
+    result = sqlite3_exec(db,indexSql, nullptr, nullptr, &errorMessage);
+
+    if (result != SQLITE_OK) {
+        std::string error = "Failed to create index: ";
+        error += errorMessage;
+        sqlite3_free(errorMessage);
+        throw std::runtime_error(error);
+    }
+
+    return true;
+}
+
+bool DataBase::createStudySessionTable() {
+    const char* sql =
+        "CREATE TABLE IF NOT EXISTS study_sessions ( "
+        "session_id INTEGER PRIMARY KEY, "
+        "word_id INTEGER NOT NULL, "
+        "review_date DATETIME NOT NULL, "
+        "was_correct BOOLEAN NOT NULL, "
+        "response_time INTEGER, "
+        "confidence_score INTEGER CHECK (confidence_score BETWEEN 1 AND 5), "
+        "study_mode TEXT CHECK (study_mode IN ('flashcard', 'multiple_choice', 'typing', 'listen')), "
+        "list_id INTEGER, "
+        "notes TEXT, "
+        "device_info TEXT, "
+        "FOREIGN KEY (word_id) REFERENCES words(word_id) "
+        ");";
+
+    char* errorMessage = nullptr;
+    int result = sqlite3_exec(db, sql, nullptr, nullptr, &errorMessage);
+
+    if (result != SQLITE_OK) {
+        std::string error = "Failed to create word table: ";
+        error += errorMessage;
+        sqlite3_free(errorMessage);
+        throw std::runtime_error(error);
+    }
+
+    return true;
+}
+
+bool DataBase::createReviewScheduleTable() {
+    const char* sql =
+        "CREATE TABLE IF NOT EXISTS review_schedule ( "
+        "schedule_id INTEGER PRIMARY KEY, "
+        "word_id INTEGER NOT NULL UNIQUE, "
+        "list_id INTEGER, "
+        "next_review_date DATETIME NOT NULL, "
+        "ease_factor REAL CHECK (ease_factor BETWEEN 1.3 AND 2.5), "
+        "interval_days INTEGER NOT NULL DEFAULT 0, "
+        "repetition_count INTEGER NOT NULL DEFAULT 0, "
+        "streak_count INTEGER NOT NULL DEFAULT 0, "
+        "last_ease_update DATETIME, "
+        "scheduling_algorithm TEXT DEFAULT 'sm2', "
+        "FOREIGN KEY (word_id) REFERENCES words(word_id), "
+        "FOREIGN KEY (list_id) REFERENCES word_lists(list_id) "
+        ");";
+
+    char* errorMessage = nullptr;
+    int result = sqlite3_exec(db, sql, nullptr, nullptr, &errorMessage);
+
+    if (result != SQLITE_OK) {
+        std::string error = "Failed to create word table: ";
+        error += errorMessage;
+        sqlite3_free(errorMessage);
+        throw std::runtime_error(error);
+    }
+
+     const char* indexSql =
+        "CREATE INDEX IF NOT EXISTS idx_next_review_date ON review_schedule(next_review_date); "
+        "CREATE INDEX IF NOT EXISTS idx_list_id ON review_schedule(list_id);";
+
+    result = sqlite3_exec(db,indexSql, nullptr, nullptr, &errorMessage);
+
+    if (result != SQLITE_OK) {
+        std::string error = "Failed to create index: ";
+        error += errorMessage;
+        sqlite3_free(errorMessage);
+        throw std::runtime_error(error);
+    }
+
+    return true;
+}
+
+bool DataBase::createExampleTable() {
+    const char* sql =
+        "CREATE TABLE IF NOT EXISTS word_examples ( "
+        "example_id INTEGER PRIMARY KEY, "
+        "word_id INTEGER NOT NULL, "
+        "example_text TEXT NOT NULL, "
+        "source TEXT, "
+        "context_notes TEXT, "
+        "date_added DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, "
+        "FOREIGN KEY (word_id) REFERENCES words(word_id) "
+        ");";
+
+    char* errorMessage = nullptr;
+    int result = sqlite3_exec(db, sql, nullptr, nullptr, &errorMessage);
+
+    if (result != SQLITE_OK) {
+        std::string error = "Failed to create word table: ";
+        error += errorMessage;
+        sqlite3_free(errorMessage);
+        throw std::runtime_error(error);
+    }
+
+    const char* indexSql =
+        "CREATE INDEX IF NOT EXISTS idx_word_examples_word_id ON word_examples(word_id); ";
+
+    result = sqlite3_exec(db,indexSql, nullptr, nullptr, &errorMessage);
+
+    if (result != SQLITE_OK) {
+        std::string error = "Failed to create index: ";
+        error += errorMessage;
+        sqlite3_free(errorMessage);
+        throw std::runtime_error(error);
+    }
+
+    return true;
+}
+
+bool DataBase::createListProgressTable() {
+    const char* sql =
+        "CREATE TABLE IF NOT EXISTS list_progress ( "
+        "progress_id INTEGER PRIMARY KEY, "
+        "user_id INTEGER, "
+        "list_id INTEGER NOT NULL, "
+        "words_mastered INTEGER NOT NULL DEFAULT 0, "
+        "total_words INTEGER NOT NULL DEFAULT 0, "
+        "last_studied DATETIME, "
+        "overall_accuracy REAL CHECK (overall_accuracy BETWEEN 0.0 AND 1.0), "
+        "total_study_time INTEGER NOT NULL DEFAULT 0, "
+        "days_streak INTEGER NOT NULL DEFAULT 0, "
+        "current_streak INTEGER NOT NULL DEFAULT 0, "
+        "best_streak INTEGER NOT NULL DEFAULT 0, "
+        "FOREIGN KEY (user_id) REFERENCES users(user_id), "
+        "FOREIGN KEY (list_id) REFERENCES word_lists(list_id), "
+        "UNIQUE(user_id, list_id)"
+        ");";
+
+    char* errorMessage = nullptr;
+    int result = sqlite3_exec(db, sql, nullptr, nullptr, &errorMessage);
+
+    if (result != SQLITE_OK) {
+        std::string error = "Failed to create word table: ";
+        error += errorMessage;
+        sqlite3_free(errorMessage);
+        throw std::runtime_error(error);
+    }
+
+    const char* indexSql =
+        "CREATE INDEX IF NOT EXISTS idx_list_progress_user_id ON list_progress(user_id); "
+        "CREATE INDEX IF NOT EXISTS idx_list_progress_list_id ON list_progress(list_id); "
+        "CREATE INDEX IF NOT EXISTS idx_list_progress_last_studied ON list_progress(last_studied);";
+
+    result = sqlite3_exec(db,indexSql, nullptr, nullptr, &errorMessage);
+
+    if (result != SQLITE_OK) {
+        std::string error = "Failed to create index: ";
+        error += errorMessage;
+        sqlite3_free(errorMessage);
+        throw std::runtime_error(error);
+    }
+
+    return true;
+}
+
+bool DataBase::createWordRelationTable() {
+    const char* sql =
+        "CREATE TABLE IF NOT EXISTS word_relations ( "
+        "relation_id INTEGER PRIMARY KEY, "
+        "word1_id INTEGER NOT NULL, "
+        "word2_id INTEGER NOT NULL, "
+        "relation_type TEXT NOT NULL CHECK (relation_type IN ('synonym', 'antonym', 'related', 'derived_from')), "
+        "strength REAL CHECK (strength BETWEEN 0.0 AND 1.0), "
+        "user_confirmed BOOLEAN NOT NULL DEFAULT 0, "
+        "FOREIGN KEY (word1_id) REFERENCES words(word_id), "
+        "FOREIGN KEY (word2_id) REFERENCES words(word_id), "
+        "UNIQUE(word1_id, word2_id, relation_type) "
+        ");";
+
+    char* errorMessage = nullptr;
+    int result = sqlite3_exec(db, sql, nullptr, nullptr, &errorMessage);
+
+    if (result != SQLITE_OK) {
+        std::string error = "Failed to create word table: ";
+        error += errorMessage;
+        sqlite3_free(errorMessage);
+        throw std::runtime_error(error);
+    }
+
+    const char* indexSql =
+        "CREATE INDEX IF NOT EXISTS idx_word_relations_word1 ON word_relations(word1_id); "
+        "CREATE INDEX IF NOT EXISTS idx_word_relations_word2 ON word_relations(word2_id); "
+        "CREATE INDEX IF NOT EXISTS idx_word_relations_type ON word_relations(relation_type); "
+        "CREATE INDEX IF NOT EXISTS idx_word_relations_confirmed ON word_relations(user_confirmed);";
+
     result = sqlite3_exec(db,indexSql, nullptr, nullptr, &errorMessage);
 
     if (result != SQLITE_OK) {
