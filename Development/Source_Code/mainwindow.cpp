@@ -9,6 +9,11 @@ MainWindow::MainWindow(QWidget *parent)
     , db("/home/brometheus/IA_Project/data/example.db")
 {
     ui->setupUi(this);
+    ui->deckList->clear();
+    std::vector<std::string> vocabLists = db.getVocabLists();
+    for (size_t i = 0; i < vocabLists.size(); i++) {
+        ui->deckList->addItem(QString::fromStdString(vocabLists.at(i)));
+    }
 }
 
 MainWindow::~MainWindow() {
@@ -28,10 +33,14 @@ void MainWindow::on_creatDeck_clicked() {
     addListWindow.exec();
 }
 
-DataBase MainWindow::getDB() {
-    return db;
+DataBase* MainWindow::getDB() {
+    return &db;
 }
 
 void MainWindow::updatingList() {
-
+    ui->deckList->clear();
+    std::vector<std::string> vocabLists = db.getVocabLists();
+    for (size_t i = 0; i < vocabLists.size(); i++) {
+        ui->deckList->addItem(QString::fromStdString(vocabLists.at(i)));
+    }
 }

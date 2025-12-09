@@ -1,6 +1,6 @@
 #include "database.h"
 #include <stdexcept>
-
+#include <vector>
 
 
 DataBase::DataBase(const std::string& dbPath) {
@@ -355,4 +355,24 @@ bool DataBase::createNewList(std::string listName, std::string targetLanguage = 
     sqlite3_finalize(stmt);
 
     return true;
+}
+
+std::vector<std::string> DataBase::getVocabLists() {
+    std::vector<std::string> allVocabLists;
+    const char* sql = "SELECT DISTINCT list_name FROM vocabulary_lists ORDER BY list_name";
+
+    sqlite3_stmt* stmt;
+    int rc = sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr);
+
+    if (rc != SQLITE_OK) {
+        throw std::runtime_error("Failed to prepare statement: " + std::string(sqlite3_errmsg(db)));
+    }
+
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        const char* listName = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
+        if (listName) {
+            allVocabLists.push_back(std::string(listName));
+        }
+    }
+    return allVocabLists;
 }

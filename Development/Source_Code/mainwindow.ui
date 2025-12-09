@@ -43,6 +43,11 @@
         </item>
         <item alignment="Qt::AlignmentFlag::AlignTop">
          <widget class="QPushButton" name="listDecks">
+          <property name="font">
+           <font>
+            <pointsize>12</pointsize>
+           </font>
+          </property>
           <property name="text">
            <string>Decks</string>
           </property>
@@ -50,6 +55,11 @@
         </item>
         <item alignment="Qt::AlignmentFlag::AlignTop">
          <widget class="QPushButton" name="addWord">
+          <property name="font">
+           <font>
+            <pointsize>12</pointsize>
+           </font>
+          </property>
           <property name="text">
            <string>Add</string>
           </property>
@@ -57,6 +67,11 @@
         </item>
         <item alignment="Qt::AlignmentFlag::AlignTop">
          <widget class="QPushButton" name="showStats">
+          <property name="font">
+           <font>
+            <pointsize>12</pointsize>
+           </font>
+          </property>
           <property name="text">
            <string>Stats</string>
           </property>
@@ -64,6 +79,11 @@
         </item>
         <item alignment="Qt::AlignmentFlag::AlignTop">
          <widget class="QPushButton" name="syncWords">
+          <property name="font">
+           <font>
+            <pointsize>12</pointsize>
+           </font>
+          </property>
           <property name="text">
            <string>Sync</string>
           </property>
@@ -117,8 +137,26 @@
         </property>
        </spacer>
       </item>
-      <item alignment="Qt::AlignmentFlag::AlignBottom">
-       <widget class="QListView" name="deckList"/>
+      <item>
+       <widget class="QListWidget" name="deckList">
+        <property name="minimumSize">
+         <size>
+          <width>400</width>
+          <height>0</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>16777215</width>
+          <height>200</height>
+         </size>
+        </property>
+        <property name="font">
+         <font>
+          <pointsize>12</pointsize>
+         </font>
+        </property>
+       </widget>
       </item>
       <item>
        <spacer name="horizontal_spacer_middle_right">
@@ -165,6 +203,11 @@
       </item>
       <item>
        <widget class="QPushButton" name="creatDeck">
+        <property name="font">
+         <font>
+          <pointsize>12</pointsize>
+         </font>
+        </property>
         <property name="text">
          <string>Create Deck</string>
         </property>

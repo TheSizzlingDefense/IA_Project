@@ -5,6 +5,7 @@ extern "C" {
     #include "sqlite3.h"
 }
 #include <string>
+#include <vector>
 
 class DataBase
 {
@@ -31,6 +32,8 @@ public:
     bool createWordRelationTable();
 
     bool createNewList(std::string listName, std::string targetLanguage, std::string description);
+
+    std::vector<std::string> getVocabLists();
 
 private:
     sqlite3* db;

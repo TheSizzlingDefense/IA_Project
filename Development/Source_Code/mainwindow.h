@@ -18,7 +18,7 @@ public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
-    DataBase getDB();
+    DataBase* getDB();
 
 private slots:
     void on_addWord_clicked();

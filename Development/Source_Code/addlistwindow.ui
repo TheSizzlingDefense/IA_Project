@@ -20,17 +20,28 @@
       <widget class="QLabel" name="listLabel">
        <property name="maximumSize">
         <size>
-         <width>100</width>
+         <width>130</width>
          <height>16777215</height>
         </size>
        </property>
+       <property name="font">
+        <font>
+         <pointsize>12</pointsize>
+        </font>
+       </property>
        <property name="text">
-        <string>List Name:             </string>
+        <string>List Name:              </string>
        </property>
       </widget>
      </item>
      <item>
-      <widget class="QLineEdit" name="listNameInput"/>
+      <widget class="QLineEdit" name="listNameInput">
+       <property name="font">
+        <font>
+         <pointsize>12</pointsize>
+        </font>
+       </property>
+      </widget>
      </item>
     </layout>
    </item>
@@ -40,22 +51,38 @@
       <widget class="QLabel" name="languageLabel">
        <property name="maximumSize">
         <size>
-         <width>100</width>
+         <width>130</width>
          <height>16777215</height>
         </size>
        </property>
+       <property name="font">
+        <font>
+         <pointsize>12</pointsize>
+        </font>
+       </property>
        <property name="text">
-        <string>Target Language: </string>
+        <string>Target Language:       </string>
        </property>
       </widget>
      </item>
      <item>
-      <widget class="QLineEdit" name="languageInput"/>
+      <widget class="QLineEdit" name="languageInput">
+       <property name="font">
+        <font>
+         <pointsize>12</pointsize>
+        </font>
+       </property>
+      </widget>
      </item>
     </layout>
    </item>
    <item>
     <widget class="QLabel" name="descriptionLabel">
+     <property name="font">
+      <font>
+       <pointsize>12</pointsize>
+      </font>
+     </property>
      <property name="text">
       <string>Description:</string>
      </property>
