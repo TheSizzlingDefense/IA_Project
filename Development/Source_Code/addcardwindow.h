@@ -16,7 +16,7 @@ public:
     ~AddCardWindow();
 
 private slots:
-    void on_cancelButton_clicked();
+    void on_cancelAdding_clicked();
 
 private:
     Ui::AddCardWindow *ui;

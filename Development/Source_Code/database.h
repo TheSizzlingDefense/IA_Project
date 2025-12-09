@@ -30,6 +30,8 @@ public:
 
     bool createWordRelationTable();
 
+    bool createNewList(std::string listName, std::string targetLanguage, std::string description);
+
 private:
     sqlite3* db;
 };

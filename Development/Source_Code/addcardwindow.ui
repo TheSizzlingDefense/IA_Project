@@ -17,7 +17,7 @@
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout_6">
      <item>
-      <widget class="QLabel" name="label_3">
+      <widget class="QLabel" name="listLabel">
        <property name="maximumSize">
         <size>
          <width>70</width>
@@ -35,14 +35,14 @@
       </widget>
      </item>
      <item>
-      <widget class="QComboBox" name="comboBox"/>
+      <widget class="QComboBox" name="vocabListDropdown"/>
      </item>
     </layout>
    </item>
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout_7">
      <item>
-      <widget class="QLabel" name="label_4">
+      <widget class="QLabel" name="wordLabel">
        <property name="minimumSize">
         <size>
          <width>0</width>
@@ -66,12 +66,12 @@
       </widget>
      </item>
      <item>
-      <widget class="QLineEdit" name="lineEdit"/>
+      <widget class="QLineEdit" name="wordInput"/>
      </item>
     </layout>
    </item>
    <item>
-    <widget class="QLabel" name="label_2">
+    <widget class="QLabel" name="definitionLabel">
      <property name="maximumSize">
       <size>
        <width>16777215</width>
@@ -91,7 +91,7 @@
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout_4">
      <item>
-      <widget class="QTextEdit" name="textEdit_2">
+      <widget class="QTextEdit" name="definitionInput">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
          <horstretch>0</horstretch>
@@ -114,7 +114,7 @@
     </layout>
    </item>
    <item>
-    <widget class="QGroupBox" name="groupBox">
+    <widget class="QGroupBox" name="additionalOptionsBox">
      <property name="font">
       <font>
        <pointsize>12</pointsize>
@@ -136,7 +136,7 @@
       <item>
        <layout class="QHBoxLayout" name="horizontalLayout_3">
         <item>
-         <widget class="QLabel" name="label_5">
+         <widget class="QLabel" name="exampleLabel">
           <property name="font">
            <font>
             <pointsize>12</pointsize>
@@ -148,7 +148,7 @@
          </widget>
         </item>
         <item>
-         <widget class="QTextEdit" name="textEdit">
+         <widget class="QTextEdit" name="exampleInput">
           <property name="maximumSize">
            <size>
             <width>16777215</width>
@@ -167,7 +167,7 @@
       <item>
        <layout class="QHBoxLayout" name="horizontalLayout_10">
         <item>
-         <widget class="QLabel" name="label_8">
+         <widget class="QLabel" name="notesLabel">
           <property name="maximumSize">
            <size>
             <width>125</width>
@@ -185,7 +185,7 @@
          </widget>
         </item>
         <item>
-         <widget class="QTextEdit" name="textEdit_3">
+         <widget class="QTextEdit" name="notesInput">
           <property name="maximumSize">
            <size>
             <width>16777215</width>
@@ -199,7 +199,7 @@
       <item>
        <layout class="QHBoxLayout" name="horizontalLayout">
         <item>
-         <widget class="QLabel" name="label">
+         <widget class="QLabel" name="synonymsLabel">
           <property name="maximumSize">
            <size>
             <width>125</width>
@@ -217,14 +217,14 @@
          </widget>
         </item>
         <item>
-         <widget class="QLineEdit" name="lineEdit_2"/>
+         <widget class="QLineEdit" name="synonymsInput"/>
         </item>
        </layout>
       </item>
       <item>
        <layout class="QHBoxLayout" name="horizontalLayout_5">
         <item>
-         <widget class="QLabel" name="label_7">
+         <widget class="QLabel" name="antonymsLabel">
           <property name="maximumSize">
            <size>
             <width>125</width>
@@ -242,14 +242,14 @@
          </widget>
         </item>
         <item>
-         <widget class="QLineEdit" name="lineEdit_3"/>
+         <widget class="QLineEdit" name="antonymsInput"/>
         </item>
        </layout>
       </item>
       <item>
        <layout class="QHBoxLayout" name="horizontalLayout_8">
         <item>
-         <widget class="QLabel" name="label_6">
+         <widget class="QLabel" name="partOfSpeechLabel">
           <property name="maximumSize">
            <size>
             <width>125</width>
@@ -267,7 +267,7 @@
          </widget>
         </item>
         <item>
-         <widget class="QComboBox" name="comboBox_2">
+         <widget class="QComboBox" name="partOfSpeechList">
           <item>
            <property name="text">
             <string>Select Option</string>
@@ -323,7 +323,7 @@
       </widget>
      </item>
      <item>
-      <widget class="QPushButton" name="cancelButton">
+      <widget class="QPushButton" name="cancelAdding">
        <property name="text">
         <string>Cancel</string>
        </property>

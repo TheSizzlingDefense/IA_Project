@@ -18,8 +18,14 @@ public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
+    DataBase getDB();
+
 private slots:
     void on_addWord_clicked();
+
+    void on_creatDeck_clicked();
+
+    void updatingList();
 
 private:
     Ui::MainWindow *ui;

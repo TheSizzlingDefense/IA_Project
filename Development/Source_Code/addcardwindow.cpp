@@ -8,12 +8,10 @@ AddCardWindow::AddCardWindow(QWidget *parent)
     ui->setupUi(this);
 }
 
-AddCardWindow::~AddCardWindow()
-{
+AddCardWindow::~AddCardWindow() {
     delete ui;
 }
 
-void AddCardWindow::on_cancelButton_clicked()
-{
+void AddCardWindow::on_cancelAdding_clicked() {
     reject();
 }

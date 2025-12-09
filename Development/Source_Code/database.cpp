@@ -331,3 +331,28 @@ bool DataBase::createWordRelationTable() {
 
     return true;
 }
+
+bool DataBase::createNewList(std::string listName, std::string targetLanguage = "", std::string description = "") {
+    const char* sql = "INSERT INTO vocabulary_lists (list_name, description, language, created_date) VALUES (?, ?, ?, datetime('now'));";
+
+    sqlite3_stmt* stmt;
+    int rc = sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr);
+    if (rc != SQLITE_OK) {
+        throw std::runtime_error("Failed to prepare statement: " + std::string(sqlite3_errmsg(db)));
+    }
+
+    sqlite3_bind_text(stmt, 1, listName.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 2, targetLanguage.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 3, description.c_str(), -1, SQLITE_TRANSIENT);
+
+    rc = sqlite3_step(stmt);
+
+    if (rc != SQLITE_DONE) {
+        sqlite3_finalize(stmt);
+        throw std::runtime_error("Execution failed: " + std::string(sqlite3_errmsg(db)));
+    }
+
+    sqlite3_finalize(stmt);
+
+    return true;
+}
