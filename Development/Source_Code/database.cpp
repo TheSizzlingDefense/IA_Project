@@ -52,7 +52,7 @@ bool DataBase::createVocabListTable() {
         "list_name TEXT NOT NULL, "
         "description TEXT, "
         "language TEXT, "
-        "created_date DATETIME DEFAULT CURRENT_TIMESTAMP "
+        "date_created DATETIME DEFAULT CURRENT_TIMESTAMP "
         ");";
 
     char* errorMessage = nullptr;
@@ -74,11 +74,10 @@ bool DataBase::createWordsTable() {
         "word_id INTEGER PRIMARY KEY AUTOINCREMENT, "
         "word TEXT NOT NULL, "
         "part_of_speech TEXT, "
-        "definition TEXT, "
+        "definition TEXT NOT NULL, "
         "language TEXT DEFAULT 'en', "
-        "difficulty_level INTEGER CHECK(difficulty_level BETWEEN 1 AND 5), "
+        "difficulty_level INTEGER CHECK(difficulty_level BETWEEN 0 AND 5), "
         "date_added DATETIME DEFAULT CURRENT_TIMESTAMP, "
-        "tags TEXT "
         ");";
 
     char* errorMessage = nullptr;
@@ -213,7 +212,6 @@ bool DataBase::createExampleTable() {
         "example_id INTEGER PRIMARY KEY, "
         "word_id INTEGER NOT NULL, "
         "example_text TEXT NOT NULL, "
-        "source TEXT, "
         "context_notes TEXT, "
         "date_added DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, "
         "FOREIGN KEY (word_id) REFERENCES words(word_id) "
@@ -333,7 +331,7 @@ bool DataBase::createWordRelationTable() {
 }
 
 bool DataBase::createNewList(std::string listName, std::string targetLanguage = "", std::string description = "") {
-    const char* sql = "INSERT INTO vocabulary_lists (list_name, description, language, created_date) VALUES (?, ?, ?, datetime('now'));";
+    const char* sql = "INSERT INTO vocabulary_lists (list_name, description, language, date_created) VALUES (?, ?, ?, datetime('now'));";
 
     sqlite3_stmt* stmt;
     int rc = sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr);
@@ -375,4 +373,56 @@ std::vector<std::string> DataBase::getVocabLists() {
         }
     }
     return allVocabLists;
+}
+
+bool DataBase::createNewWord(std::string word, std::string partOfSpeech, std::string definition, std::string targetLanguage) {
+    const char* sql = "INSERT INTO words (word, part_of_speech, definition, language, difficulty_level, date_added) VALUES (?, ?, ?, ?, 5, datetime('now'));";
+
+    sqlite3_stmt* stmt;
+    int rc = sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr);
+    if (rc != SQLITE_OK) {
+        throw std::runtime_error("Failed to prepare statement: " + std::string(sqlite3_errmsg(db)));
+    }
+
+    sqlite3_bind_text(stmt, 1, word.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 2, partOfSpeech.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 3, definition.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 4, targetLanguage.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_int(stmt, 5, 0);
+
+    rc = sqlite3_step(stmt);
+
+    if (rc != SQLITE_DONE) {
+        sqlite3_finalize(stmt);
+        throw std::runtime_error("Execution failed: " + std::string(sqlite3_errmsg(db)));
+    }
+
+    sqlite3_finalize(stmt);
+
+    return true;
+}
+
+bool DataBase::createNewExample(int wordID, std::string exampleText, std::string contextNotes) {
+    const char* sql = "INSERT INTO word_examples (word_id, example_text, context_notes, date_added) VALUES (?, ? , ?, datetime('now'));";
+
+    sqlite3_stmt* stmt;
+    int rc = sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr);
+    if (rc != SQLITE_OK) {
+        throw std::runtime_error("Failed to prepare statement:" + std::string(sqlite3_errmsg(db)));
+    }
+
+    sqlite3_bind_int(stmt, 1, wordID);
+    sqlite3_bind_text(stmt, 2, exampleText.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 3, contextNotes.c_str(), -1, SQLITE_TRANSIENT);
+
+    rc = sqlite3_step(stmt);
+
+    if (rc != SQLITE_DONE) {
+        sqlite3_finalize(stmt);
+        throw std::runtime_error("Execution failed: " + std::string(sqlite3_errmsg(db)));
+        }
+
+    sqlite3_finalize(stmt);
+
+        return true;
 }

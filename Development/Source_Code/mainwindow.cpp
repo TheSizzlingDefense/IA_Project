@@ -9,6 +9,9 @@ MainWindow::MainWindow(QWidget *parent)
     , db("/home/brometheus/IA_Project/data/example.db")
 {
     ui->setupUi(this);
+    ui->deckList->setStyleSheet(
+        "QListWidget::item:selected { color: black; }"
+        );
     ui->deckList->clear();
     std::vector<std::string> vocabLists = db.getVocabLists();
     for (size_t i = 0; i < vocabLists.size(); i++) {
@@ -21,7 +24,7 @@ MainWindow::~MainWindow() {
 }
 
 void MainWindow::on_addWord_clicked() {
-    AddCardWindow addCardWindow;
+    AddCardWindow addCardWindow{nullptr, &db};
     addCardWindow.setModal(true);
     addCardWindow.exec();
 }

@@ -35,6 +35,10 @@ public:
 
     std::vector<std::string> getVocabLists();
 
+    bool createNewWord(std::string word, std::string partOfSpeech = "", std::string definition = "", std::string targetLanguage = "");
+
+    bool createNewExample(int wordID, std::string exampleText = "", std::string contextNotes = "");
+
 private:
     sqlite3* db;
 };

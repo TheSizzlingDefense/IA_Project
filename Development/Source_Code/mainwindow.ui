@@ -156,6 +156,9 @@
           <pointsize>12</pointsize>
          </font>
         </property>
+        <property name="isWrapping" stdset="0">
+         <bool>false</bool>
+        </property>
        </widget>
       </item>
       <item>
