@@ -12,6 +12,7 @@ SOURCES += \
     database.cpp \
     main.cpp \
     mainwindow.cpp \
+    spacedrepetitioncalculator.cpp \
     sqlite3.c
 
 HEADERS += \
@@ -19,6 +20,7 @@ HEADERS += \
     addlistwindow.h \
     database.h \
     mainwindow.h \
+    spacedrepetitioncalculator.h \
     sqlite3.h
 
 FORMS += \

@@ -39,6 +39,10 @@ public:
 
     bool createNewExample(int wordID, std::string exampleText = "", std::string contextNotes = "");
 
+    bool createNewRelation(int word1ID, int word2IDs, std::string relationType = "");
+
+    bool createListWordRelation(int listID, int wordIDD);
+
 private:
     sqlite3* db;
 };

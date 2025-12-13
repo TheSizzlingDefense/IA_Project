@@ -23,20 +23,20 @@ DataBase::DataBase(const std::string& dbPath) {
 DataBase::~DataBase() {
     if (db != nullptr) {
 
-        int rc = sqlite3_close(db);
+        int result = sqlite3_close(db);
 
-        if (rc != SQLITE_OK) {
+        if (result != SQLITE_OK) {
             sqlite3_close_v2(db);
         }
 
         db = nullptr;
     }
 }
+
 void DataBase::enableForeignKeys() {
     char* errorMessage = nullptr;
 
     int result = sqlite3_exec(db, "PRAGMA foreign_keys = ON;", nullptr, nullptr, &errorMessage);
-
     if (result != SQLITE_OK) {
         std::string error = "Failed to enable foreign keys";
         error += errorMessage;
@@ -57,7 +57,6 @@ bool DataBase::createVocabListTable() {
 
     char* errorMessage = nullptr;
     int result = sqlite3_exec(db, sql, nullptr, nullptr, &errorMessage);
-
     if (result != SQLITE_OK) {
         std::string error = "Failed to create list table: ";
         error += errorMessage;
@@ -76,13 +75,11 @@ bool DataBase::createWordsTable() {
         "part_of_speech TEXT, "
         "definition TEXT NOT NULL, "
         "language TEXT DEFAULT 'en', "
-        "difficulty_level INTEGER CHECK(difficulty_level BETWEEN 0 AND 5), "
-        "date_added DATETIME DEFAULT CURRENT_TIMESTAMP, "
+        "date_added DATETIME DEFAULT CURRENT_TIMESTAMP "
         ");";
 
     char* errorMessage = nullptr;
     int result = sqlite3_exec(db, sql, nullptr, nullptr, &errorMessage);
-
     if (result != SQLITE_OK) {
         std::string error = "Failed to create word table: ";
         error += errorMessage;
@@ -100,9 +97,6 @@ bool DataBase::createListWordTable() {
         "list_id INTEGER NOT NULL, "
         "word_id INTEGER NOT NULL, "
         "added_date DATETIME DEFAULT CURRENT_TIMESTAMP, "
-        "order_index INTEGER, "
-        "mastery_level INTEGER CHECK(mastery_level BETWEEN 0 AND 5), "
-        "is_active BOOLEAN DEFAULT 1, "
         "FOREIGN KEY (list_id) REFERENCES vocabulary_lists(list_id) ON DELETE CASCADE, "
         "FOREIGN KEY (word_id) REFERENCES words(word_id) ON DELETE CASCADE, "
         "UNIQUE(list_id, word_id)"
@@ -110,7 +104,6 @@ bool DataBase::createListWordTable() {
 
     char* errorMessage = nullptr;
     int result = sqlite3_exec(db, sql, nullptr, nullptr, &errorMessage);
-
     if (result != SQLITE_OK) {
         std::string error = "Failed to create word table: ";
         error += errorMessage;
@@ -123,7 +116,6 @@ bool DataBase::createListWordTable() {
         "CREATE INDEX IF NOT EXISTS idx_list_words_word_id ON list_words(word_id);";
 
     result = sqlite3_exec(db,indexSql, nullptr, nullptr, &errorMessage);
-
     if (result != SQLITE_OK) {
         std::string error = "Failed to create index: ";
         error += errorMessage;
@@ -152,7 +144,6 @@ bool DataBase::createStudySessionTable() {
 
     char* errorMessage = nullptr;
     int result = sqlite3_exec(db, sql, nullptr, nullptr, &errorMessage);
-
     if (result != SQLITE_OK) {
         std::string error = "Failed to create word table: ";
         error += errorMessage;
@@ -182,7 +173,6 @@ bool DataBase::createReviewScheduleTable() {
 
     char* errorMessage = nullptr;
     int result = sqlite3_exec(db, sql, nullptr, nullptr, &errorMessage);
-
     if (result != SQLITE_OK) {
         std::string error = "Failed to create word table: ";
         error += errorMessage;
@@ -195,7 +185,6 @@ bool DataBase::createReviewScheduleTable() {
         "CREATE INDEX IF NOT EXISTS idx_list_id ON review_schedule(list_id);";
 
     result = sqlite3_exec(db,indexSql, nullptr, nullptr, &errorMessage);
-
     if (result != SQLITE_OK) {
         std::string error = "Failed to create index: ";
         error += errorMessage;
@@ -219,7 +208,6 @@ bool DataBase::createExampleTable() {
 
     char* errorMessage = nullptr;
     int result = sqlite3_exec(db, sql, nullptr, nullptr, &errorMessage);
-
     if (result != SQLITE_OK) {
         std::string error = "Failed to create word table: ";
         error += errorMessage;
@@ -231,7 +219,6 @@ bool DataBase::createExampleTable() {
         "CREATE INDEX IF NOT EXISTS idx_word_examples_word_id ON word_examples(word_id); ";
 
     result = sqlite3_exec(db,indexSql, nullptr, nullptr, &errorMessage);
-
     if (result != SQLITE_OK) {
         std::string error = "Failed to create index: ";
         error += errorMessage;
@@ -263,7 +250,6 @@ bool DataBase::createListProgressTable() {
 
     char* errorMessage = nullptr;
     int result = sqlite3_exec(db, sql, nullptr, nullptr, &errorMessage);
-
     if (result != SQLITE_OK) {
         std::string error = "Failed to create word table: ";
         error += errorMessage;
@@ -277,7 +263,6 @@ bool DataBase::createListProgressTable() {
         "CREATE INDEX IF NOT EXISTS idx_list_progress_last_studied ON progress_list(last_studied);";
 
     result = sqlite3_exec(db,indexSql, nullptr, nullptr, &errorMessage);
-
     if (result != SQLITE_OK) {
         std::string error = "Failed to create index: ";
         error += errorMessage;
@@ -295,8 +280,6 @@ bool DataBase::createWordRelationTable() {
         "word1_id INTEGER NOT NULL, "
         "word2_id INTEGER NOT NULL, "
         "relation_type TEXT NOT NULL CHECK (relation_type IN ('synonym', 'antonym', 'related', 'derived_from')), "
-        "strength REAL CHECK (strength BETWEEN 0.0 AND 1.0), "
-        "user_confirmed BOOLEAN NOT NULL DEFAULT 0, "
         "FOREIGN KEY (word1_id) REFERENCES words(word_id), "
         "FOREIGN KEY (word2_id) REFERENCES words(word_id), "
         "UNIQUE(word1_id, word2_id, relation_type) "
@@ -304,7 +287,6 @@ bool DataBase::createWordRelationTable() {
 
     char* errorMessage = nullptr;
     int result = sqlite3_exec(db, sql, nullptr, nullptr, &errorMessage);
-
     if (result != SQLITE_OK) {
         std::string error = "Failed to create word table: ";
         error += errorMessage;
@@ -315,11 +297,9 @@ bool DataBase::createWordRelationTable() {
     const char* indexSql =
         "CREATE INDEX IF NOT EXISTS idx_word_relations_word1 ON word_relations(word1_id); "
         "CREATE INDEX IF NOT EXISTS idx_word_relations_word2 ON word_relations(word2_id); "
-        "CREATE INDEX IF NOT EXISTS idx_word_relations_type ON word_relations(relation_type); "
-        "CREATE INDEX IF NOT EXISTS idx_word_relations_confirmed ON word_relations(user_confirmed);";
+        "CREATE INDEX IF NOT EXISTS idx_word_relations_type ON word_relations(relation_type); ";
 
     result = sqlite3_exec(db,indexSql, nullptr, nullptr, &errorMessage);
-
     if (result != SQLITE_OK) {
         std::string error = "Failed to create index: ";
         error += errorMessage;
@@ -334,8 +314,8 @@ bool DataBase::createNewList(std::string listName, std::string targetLanguage = 
     const char* sql = "INSERT INTO vocabulary_lists (list_name, description, language, date_created) VALUES (?, ?, ?, datetime('now'));";
 
     sqlite3_stmt* stmt;
-    int rc = sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr);
-    if (rc != SQLITE_OK) {
+    int result = sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr);
+    if (result != SQLITE_OK) {
         throw std::runtime_error("Failed to prepare statement: " + std::string(sqlite3_errmsg(db)));
     }
 
@@ -343,9 +323,8 @@ bool DataBase::createNewList(std::string listName, std::string targetLanguage = 
     sqlite3_bind_text(stmt, 2, targetLanguage.c_str(), -1, SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt, 3, description.c_str(), -1, SQLITE_TRANSIENT);
 
-    rc = sqlite3_step(stmt);
-
-    if (rc != SQLITE_DONE) {
+    result = sqlite3_step(stmt);
+    if (result != SQLITE_DONE) {
         sqlite3_finalize(stmt);
         throw std::runtime_error("Execution failed: " + std::string(sqlite3_errmsg(db)));
     }
@@ -360,9 +339,8 @@ std::vector<std::string> DataBase::getVocabLists() {
     const char* sql = "SELECT DISTINCT list_name FROM vocabulary_lists ORDER BY list_name";
 
     sqlite3_stmt* stmt;
-    int rc = sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr);
-
-    if (rc != SQLITE_OK) {
+    int result = sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr);
+    if (result != SQLITE_OK) {
         throw std::runtime_error("Failed to prepare statement: " + std::string(sqlite3_errmsg(db)));
     }
 
@@ -376,11 +354,11 @@ std::vector<std::string> DataBase::getVocabLists() {
 }
 
 bool DataBase::createNewWord(std::string word, std::string partOfSpeech, std::string definition, std::string targetLanguage) {
-    const char* sql = "INSERT INTO words (word, part_of_speech, definition, language, difficulty_level, date_added) VALUES (?, ?, ?, ?, 5, datetime('now'));";
+    const char* sql = "INSERT INTO words (word, part_of_speech, definition, language, date_added) VALUES (?, ?, ?, ?, datetime('now'));";
 
     sqlite3_stmt* stmt;
-    int rc = sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr);
-    if (rc != SQLITE_OK) {
+    int result = sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr);
+    if (result != SQLITE_OK) {
         throw std::runtime_error("Failed to prepare statement: " + std::string(sqlite3_errmsg(db)));
     }
 
@@ -388,11 +366,9 @@ bool DataBase::createNewWord(std::string word, std::string partOfSpeech, std::st
     sqlite3_bind_text(stmt, 2, partOfSpeech.c_str(), -1, SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt, 3, definition.c_str(), -1, SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt, 4, targetLanguage.c_str(), -1, SQLITE_TRANSIENT);
-    sqlite3_bind_int(stmt, 5, 0);
 
-    rc = sqlite3_step(stmt);
-
-    if (rc != SQLITE_DONE) {
+    result = sqlite3_step(stmt);
+    if (result != SQLITE_DONE) {
         sqlite3_finalize(stmt);
         throw std::runtime_error("Execution failed: " + std::string(sqlite3_errmsg(db)));
     }
@@ -406,23 +382,63 @@ bool DataBase::createNewExample(int wordID, std::string exampleText, std::string
     const char* sql = "INSERT INTO word_examples (word_id, example_text, context_notes, date_added) VALUES (?, ? , ?, datetime('now'));";
 
     sqlite3_stmt* stmt;
-    int rc = sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr);
-    if (rc != SQLITE_OK) {
-        throw std::runtime_error("Failed to prepare statement:" + std::string(sqlite3_errmsg(db)));
+    int result = sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr);
+    if (result != SQLITE_OK) {
+        throw std::runtime_error("Failed to prepare statement: " + std::string(sqlite3_errmsg(db)));
     }
 
     sqlite3_bind_int(stmt, 1, wordID);
     sqlite3_bind_text(stmt, 2, exampleText.c_str(), -1, SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt, 3, contextNotes.c_str(), -1, SQLITE_TRANSIENT);
 
-    rc = sqlite3_step(stmt);
-
-    if (rc != SQLITE_DONE) {
+    result = sqlite3_step(stmt);
+    if (result != SQLITE_DONE) {
         sqlite3_finalize(stmt);
         throw std::runtime_error("Execution failed: " + std::string(sqlite3_errmsg(db)));
         }
 
     sqlite3_finalize(stmt);
 
-        return true;
+    return true;
+}
+
+bool DataBase::createNewRelation(int word1ID, int word2ID, std::string relationType) {
+    const char* sql = "INSERT INTO word_relations (word1_id, word2_id, relation_type) VALUES (?, ?, ?));";
+
+    sqlite3_stmt* stmt;
+    int result = sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr);
+    if (result != SQLITE_OK) {
+        throw std::runtime_error("Failed to prepare statement: " + std::string(sqlite3_errmsg(db)));
+    }
+
+    sqlite3_bind_int(stmt, 1, word1ID);
+    sqlite3_bind_int(stmt, 2, word2ID);
+    sqlite3_bind_text(stmt, 3, relationType.c_str(), -1, SQLITE_TRANSIENT);
+
+    result = sqlite3_step(stmt);
+    if (result != SQLITE_OK) {
+        throw std::runtime_error("Execution failed: " + std::string(sqlite3_errmsg(db)));
+    }
+
+    return true;
+}
+
+bool DataBase::createListWordRelation(int listID, int wordID) {
+    const char* sql = "INSERT INTO list_words (list_id, word_id, added_date) VALUES (?, ?, datetime('now'));";
+
+    sqlite3_stmt* stmt;
+    int result = sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr);
+    if (result != SQLITE_OK) {
+        throw std::runtime_error("Failed to prepare statement: " + std::string(sqlite3_errmsg(db)));
+    }
+
+    sqlite3_bind_int(stmt, 1, listID);
+    sqlite3_bind_int(stmt, 2, wordID);
+
+    result = sqlite3_step(stmt);
+    if (result != SQLITE_OK) {
+        throw std::runtime_error("Execution failed: " + std::string(sqlite3_errmsg(db)));
+    }
+
+    return true;
 }
