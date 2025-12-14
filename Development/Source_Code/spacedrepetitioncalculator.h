@@ -13,19 +13,13 @@ public:
     bool isDue() const;
 
     double getEasinessFactor() const {return easinessFactor; };
-
     int getRepetitions() const { return repetitions; };
-
     int getInterval() const { return interval; };
-
     time_t getNextReview() const { return nextReview; };
 
     void setEasinessFactor(double ef) { easinessFactor = ef; };
-
     void setRepetitions(int rep) { repetitions = rep; };
-
     void setInterval(int intv) { interval = intv; };
-
     void setNextReview(time_t next) { nextReview = next; };
 
 private:

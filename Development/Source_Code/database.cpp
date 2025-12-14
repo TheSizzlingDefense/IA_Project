@@ -157,18 +157,15 @@ bool DataBase::createStudySessionTable() {
 bool DataBase::createReviewScheduleTable() {
     const char* sql =
         "CREATE TABLE IF NOT EXISTS review_schedule ( "
-        "schedule_id INTEGER PRIMARY KEY, "
+        "schedule_id INTEGER PRIMARY KEY AUTOINCREMENT, "
         "word_id INTEGER NOT NULL UNIQUE, "
         "list_id INTEGER, "
         "next_review_date DATETIME NOT NULL, "
         "ease_factor REAL CHECK (ease_factor BETWEEN 1.3 AND 2.5), "
         "interval_days INTEGER NOT NULL DEFAULT 0, "
         "repetition_count INTEGER NOT NULL DEFAULT 0, "
-        "streak_count INTEGER NOT NULL DEFAULT 0, "
-        "last_ease_update DATETIME, "
-        "scheduling_algorithm TEXT DEFAULT 'sm2', "
         "FOREIGN KEY (word_id) REFERENCES words(word_id), "
-        "FOREIGN KEY (list_id) REFERENCES word_lists(list_id) "
+        "FOREIGN KEY (list_id) REFERENCES vocabulary_lists(list_id) "
         ");";
 
     char* errorMessage = nullptr;
@@ -320,8 +317,8 @@ bool DataBase::createNewList(std::string listName, std::string targetLanguage = 
     }
 
     sqlite3_bind_text(stmt, 1, listName.c_str(), -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 2, targetLanguage.c_str(), -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 3, description.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 2, description.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 3, targetLanguage.c_str(), -1, SQLITE_TRANSIENT);
 
     result = sqlite3_step(stmt);
     if (result != SQLITE_DONE) {
@@ -350,6 +347,9 @@ std::vector<std::string> DataBase::getVocabLists() {
             allVocabLists.push_back(std::string(listName));
         }
     }
+
+    sqlite3_finalize(stmt);
+
     return allVocabLists;
 }
 
@@ -403,7 +403,7 @@ bool DataBase::createNewExample(int wordID, std::string exampleText, std::string
 }
 
 bool DataBase::createNewRelation(int word1ID, int word2ID, std::string relationType) {
-    const char* sql = "INSERT INTO word_relations (word1_id, word2_id, relation_type) VALUES (?, ?, ?));";
+    const char* sql = "INSERT INTO word_relations (word1_id, word2_id, relation_type) VALUES (?, ?, ?);";
 
     sqlite3_stmt* stmt;
     int result = sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr);
@@ -416,15 +416,18 @@ bool DataBase::createNewRelation(int word1ID, int word2ID, std::string relationT
     sqlite3_bind_text(stmt, 3, relationType.c_str(), -1, SQLITE_TRANSIENT);
 
     result = sqlite3_step(stmt);
-    if (result != SQLITE_OK) {
+    if (result != SQLITE_DONE) {
+        sqlite3_finalize(stmt);
         throw std::runtime_error("Execution failed: " + std::string(sqlite3_errmsg(db)));
     }
 
+    sqlite3_finalize(stmt);
+    
     return true;
 }
 
 bool DataBase::createListWordRelation(int listID, int wordID) {
-    const char* sql = "INSERT INTO list_words (list_id, word_id, added_date) VALUES (?, ?, datetime('now'));";
+    const char* sql = "INSERT OR IGNORE INTO list_words (list_id, word_id, added_date) VALUES (?, ?, datetime('now'));";
 
     sqlite3_stmt* stmt;
     int result = sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr);
@@ -436,9 +439,12 @@ bool DataBase::createListWordRelation(int listID, int wordID) {
     sqlite3_bind_int(stmt, 2, wordID);
 
     result = sqlite3_step(stmt);
-    if (result != SQLITE_OK) {
+    if (result != SQLITE_DONE) {
+        sqlite3_finalize(stmt);
         throw std::runtime_error("Execution failed: " + std::string(sqlite3_errmsg(db)));
     }
+
+    sqlite3_finalize(stmt);
 
     return true;
 }
