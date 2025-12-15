@@ -230,7 +230,6 @@ bool DataBase::createListProgressTable() {
     const char* sql =
         "CREATE TABLE IF NOT EXISTS progress_list ( "
         "progress_id INTEGER PRIMARY KEY, "
-        "user_id INTEGER, "
         "list_id INTEGER NOT NULL, "
         "words_mastered INTEGER NOT NULL DEFAULT 0, "
         "total_words INTEGER NOT NULL DEFAULT 0, "
@@ -240,9 +239,7 @@ bool DataBase::createListProgressTable() {
         "days_streak INTEGER NOT NULL DEFAULT 0, "
         "current_streak INTEGER NOT NULL DEFAULT 0, "
         "best_streak INTEGER NOT NULL DEFAULT 0, "
-        "FOREIGN KEY (user_id) REFERENCES users(user_id), "
-        "FOREIGN KEY (list_id) REFERENCES vocabulary_lists(list_id), "
-        "UNIQUE(user_id, list_id)"
+        "FOREIGN KEY (list_id) REFERENCES vocabulary_lists(list_id)"
         ");";
 
     char* errorMessage = nullptr;
@@ -255,7 +252,6 @@ bool DataBase::createListProgressTable() {
     }
 
     const char* indexSql =
-        "CREATE INDEX IF NOT EXISTS idx_list_progress_user_id ON progress_list(user_id); "
         "CREATE INDEX IF NOT EXISTS idx_list_progress_list_id ON progress_list(list_id); "
         "CREATE INDEX IF NOT EXISTS idx_list_progress_last_studied ON progress_list(last_studied);";
 
@@ -353,31 +349,6 @@ std::vector<std::string> DataBase::getVocabLists() {
     return allVocabLists;
 }
 
-bool DataBase::createNewWord(std::string word, std::string partOfSpeech, std::string definition, std::string targetLanguage) {
-    const char* sql = "INSERT INTO words (word, part_of_speech, definition, language, date_added) VALUES (?, ?, ?, ?, datetime('now'));";
-
-    sqlite3_stmt* stmt;
-    int result = sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr);
-    if (result != SQLITE_OK) {
-        throw std::runtime_error("Failed to prepare statement: " + std::string(sqlite3_errmsg(db)));
-    }
-
-    sqlite3_bind_text(stmt, 1, word.c_str(), -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 2, partOfSpeech.c_str(), -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 3, definition.c_str(), -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 4, targetLanguage.c_str(), -1, SQLITE_TRANSIENT);
-
-    result = sqlite3_step(stmt);
-    if (result != SQLITE_DONE) {
-        sqlite3_finalize(stmt);
-        throw std::runtime_error("Execution failed: " + std::string(sqlite3_errmsg(db)));
-    }
-
-    sqlite3_finalize(stmt);
-
-    return true;
-}
-
 bool DataBase::createNewExample(int wordID, std::string exampleText, std::string contextNotes) {
     const char* sql = "INSERT INTO word_examples (word_id, example_text, context_notes, date_added) VALUES (?, ? , ?, datetime('now'));";
 
@@ -426,25 +397,220 @@ bool DataBase::createNewRelation(int word1ID, int word2ID, std::string relationT
     return true;
 }
 
-bool DataBase::createListWordRelation(int listID, int wordID) {
-    const char* sql = "INSERT OR IGNORE INTO list_words (list_id, word_id, added_date) VALUES (?, ?, datetime('now'));";
+bool DataBase::beginTransaction() {
+    char* err = nullptr;
+    int rc = sqlite3_exec(db, "BEGIN TRANSACTION;", nullptr, nullptr, &err);
+    if (rc != SQLITE_OK) {
+        std::string e = "Failed to begin transaction: ";
+        if (err) { e += err; sqlite3_free(err); }
+        throw std::runtime_error(e);
+    }
+    return true;
+}
 
-    sqlite3_stmt* stmt;
-    int result = sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr);
-    if (result != SQLITE_OK) {
+bool DataBase::commitTransaction() {
+    char* err = nullptr;
+    int rc = sqlite3_exec(db, "COMMIT;", nullptr, nullptr, &err);
+    if (rc != SQLITE_OK) {
+        std::string e = "Failed to commit transaction: ";
+        if (err) { e += err; sqlite3_free(err); }
+        throw std::runtime_error(e);
+    }
+    return true;
+}
+
+bool DataBase::rollbackTransaction() {
+    char* err = nullptr;
+    int rc = sqlite3_exec(db, "ROLLBACK;", nullptr, nullptr, &err);
+    if (rc != SQLITE_OK) {
+        std::string e = "Failed to rollback transaction: ";
+        if (err) { e += err; sqlite3_free(err); }
+        throw std::runtime_error(e);
+    }
+    return true;
+}
+
+int DataBase::getWordId(const std::string& word, const std::string& language) {
+    const char* sql = "SELECT word_id FROM words WHERE word = ? AND language = ? LIMIT 1;";
+    sqlite3_stmt* stmt = nullptr;
+    int rc = sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr);
+    if (rc != SQLITE_OK) {
+        throw std::runtime_error("Failed to prepare statement: " + std::string(sqlite3_errmsg(db)));
+    }
+
+    sqlite3_bind_text(stmt, 1, word.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 2, language.c_str(), -1, SQLITE_TRANSIENT);
+
+    int wordID = -1;
+    rc = sqlite3_step(stmt);
+    if (rc == SQLITE_ROW) {
+        wordID = sqlite3_column_int(stmt, 0);
+    }
+
+    sqlite3_finalize(stmt);
+    return wordID;
+}
+
+int DataBase::getListId(const std::string& listName) {
+    const char* sql = "SELECT list_id FROM vocabulary_lists WHERE list_name = ? LIMIT 1;";
+    sqlite3_stmt* stmt = nullptr;
+    int rc = sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr);
+    if (rc != SQLITE_OK) {
+        throw std::runtime_error("Failed to prepare statement: " + std::string(sqlite3_errmsg(db)));
+    }
+
+    sqlite3_bind_text(stmt, 1, listName.c_str(), -1, SQLITE_TRANSIENT);
+
+    int listID = -1;
+    rc = sqlite3_step(stmt);
+    if (rc == SQLITE_ROW) {
+        listID = sqlite3_column_int(stmt, 0);
+    }
+
+    sqlite3_finalize(stmt);
+    return listID;
+}
+
+int DataBase::addOrGetWord(const std::string& word, const std::string& partOfSpeech, const std::string& definition, const std::string& language) {
+    int existing = getWordId(word, language);
+    if (existing != -1) return existing;
+
+    const char* sql = "INSERT INTO words (word, part_of_speech, definition, language, date_added) VALUES (?, ?, ?, ?, datetime('now'));";
+    sqlite3_stmt* stmt = nullptr;
+    int rc = sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr);
+    if (rc != SQLITE_OK) {
+        throw std::runtime_error("Failed to prepare statement: " + std::string(sqlite3_errmsg(db)));
+    }
+
+    sqlite3_bind_text(stmt, 1, word.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 2, partOfSpeech.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 3, definition.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 4, language.c_str(), -1, SQLITE_TRANSIENT);
+
+    rc = sqlite3_step(stmt);
+    if (rc != SQLITE_DONE) {
+        sqlite3_finalize(stmt);
+        throw std::runtime_error("Execution failed: " + std::string(sqlite3_errmsg(db)));
+    }
+
+    sqlite3_finalize(stmt);
+    sqlite3_int64 id64 = sqlite3_last_insert_rowid(db);
+    return static_cast<int>(id64);
+}
+
+bool DataBase::addWordToList(int listID, int wordID) {
+    const char* sql = "INSERT OR IGNORE INTO list_words (list_id, word_id, added_date) VALUES (?, ?, datetime('now'));";
+    sqlite3_stmt* stmt = nullptr;
+    int rc = sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr);
+    if (rc != SQLITE_OK) {
         throw std::runtime_error("Failed to prepare statement: " + std::string(sqlite3_errmsg(db)));
     }
 
     sqlite3_bind_int(stmt, 1, listID);
     sqlite3_bind_int(stmt, 2, wordID);
 
-    result = sqlite3_step(stmt);
-    if (result != SQLITE_DONE) {
+    rc = sqlite3_step(stmt);
+    if (rc != SQLITE_DONE) {
         sqlite3_finalize(stmt);
         throw std::runtime_error("Execution failed: " + std::string(sqlite3_errmsg(db)));
     }
 
     sqlite3_finalize(stmt);
 
+    // sqlite3_changes returns number of rows modified by the most recent operation on the connection
+    int changes = sqlite3_changes(db);
+    return changes > 0; // true if inserted, false if ignored
+}
+
+bool DataBase::initReviewSchedule(int wordID, int listID) {
+    const char* sql = "INSERT OR IGNORE INTO review_schedule (word_id, list_id, next_review_date, ease_factor, interval_days, repetition_count) VALUES (?, ?, datetime('now'), 2.5, 0, 0);";
+    sqlite3_stmt* stmt = nullptr;
+    int rc = sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr);
+    if (rc != SQLITE_OK) {
+        throw std::runtime_error("Failed to prepare statement: " + std::string(sqlite3_errmsg(db)));
+    }
+
+    sqlite3_bind_int(stmt, 1, wordID);
+    sqlite3_bind_int(stmt, 2, listID);
+
+    rc = sqlite3_step(stmt);
+    if (rc != SQLITE_DONE) {
+        sqlite3_finalize(stmt);
+        throw std::runtime_error("Execution failed: " + std::string(sqlite3_errmsg(db)));
+    }
+
+    sqlite3_finalize(stmt);
     return true;
+}
+
+bool DataBase::incrementListProgress(int listID, int delta) {
+    const char* updateSql = "UPDATE progress_list SET total_words = total_words + ? WHERE list_id = ?;";
+    sqlite3_stmt* stmt = nullptr;
+    int rc = sqlite3_prepare_v2(db, updateSql, -1, &stmt, nullptr);
+    if (rc != SQLITE_OK) {
+        throw std::runtime_error("Failed to prepare statement: " + std::string(sqlite3_errmsg(db)));
+    }
+
+    sqlite3_bind_int(stmt, 1, delta);
+    sqlite3_bind_int(stmt, 2, listID);
+
+    rc = sqlite3_step(stmt);
+    if (rc != SQLITE_DONE && rc != SQLITE_ROW) {
+        sqlite3_finalize(stmt);
+        throw std::runtime_error("Execution failed: " + std::string(sqlite3_errmsg(db)));
+    }
+
+    sqlite3_finalize(stmt);
+
+    int changes = sqlite3_changes(db);
+    if (changes == 0) {
+        // No existing row; insert a new progress row
+        const char* insertSql = "INSERT INTO progress_list (list_id, total_words, words_mastered) VALUES (?, ?, 0);";
+        sqlite3_stmt* istmt = nullptr;
+        rc = sqlite3_prepare_v2(db, insertSql, -1, &istmt, nullptr);
+        if (rc != SQLITE_OK) {
+            throw std::runtime_error("Failed to prepare statement: " + std::string(sqlite3_errmsg(db)));
+        }
+
+        sqlite3_bind_int(istmt, 1, listID);
+        sqlite3_bind_int(istmt, 2, delta);
+
+        rc = sqlite3_step(istmt);
+        if (rc != SQLITE_DONE) {
+            sqlite3_finalize(istmt);
+            throw std::runtime_error("Execution failed: " + std::string(sqlite3_errmsg(db)));
+        }
+
+        sqlite3_finalize(istmt);
+    }
+
+    return true;
+}
+
+int DataBase::addWordAndSetup(int listID, const std::string& word, const std::string& partOfSpeech, const std::string& definition, const std::string& language) {
+    try {
+        beginTransaction();
+
+        int wordID = addOrGetWord(word, partOfSpeech, definition, language);
+        if (wordID < 0) {
+            rollbackTransaction();
+            throw std::runtime_error("Failed to obtain or create word id");
+        }
+
+        bool inserted = addWordToList(listID, wordID);
+
+        // Initialize review schedule regardless (INSERT OR IGNORE inside)
+        initReviewSchedule(wordID, listID);
+
+        // Only increment progress when a new membership row was inserted
+        if (inserted) {
+            incrementListProgress(listID, 1);
+        }
+
+        commitTransaction();
+        return wordID;
+    } catch (...) {
+        try { rollbackTransaction(); } catch (...) {}
+        throw; // rethrow original exception
+    }
 }

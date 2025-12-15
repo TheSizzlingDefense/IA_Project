@@ -1,5 +1,7 @@
 #include "addcardwindow.h"
 #include "ui_addcardwindow.h"
+#include <QMessageBox>
+#include <stdexcept>
 
 AddCardWindow::AddCardWindow(QWidget *parent, DataBase* dataBase)
     : QDialog(parent)
@@ -23,6 +25,50 @@ void AddCardWindow::on_cancelAdding_clicked() {
 }
 
 void AddCardWindow::on_addButton_clicked() {
+    // Gather inputs
+    QString listNameQ = ui->vocabListDropdown->currentText();
+    std::string listName = listNameQ.toStdString();
 
+    if (listNameQ.isEmpty() || listNameQ == "Select Option") {
+        QMessageBox::warning(this, "Invalid List", "Please select a vocabulary list.");
+        return;
+    }
+
+    QString wordQ = ui->wordInput->text();
+    std::string word = wordQ.toStdString();
+    if (wordQ.trimmed().isEmpty()) {
+        QMessageBox::warning(this, "Invalid Word", "Please enter a word.");
+        return;
+    }
+
+    QString definitionQ = ui->definitionInput->toPlainText();
+    std::string definition = definitionQ.toStdString();
+
+    QString posQ = ui->partOfSpeechList->currentText();
+    std::string partOfSpeech = (posQ == "Select Option") ? std::string("") : posQ.toStdString();
+
+    // Find list id
+    int listID = db->getListId(listName);
+    if (listID < 0) {
+        QMessageBox::warning(this, "List Not Found", "Selected list was not found in the database.");
+        return;
+    }
+
+    try {
+        int wordID = db->addWordAndSetup(listID, word, partOfSpeech, definition, "");
+
+        // If additional options checked, create example and/or notes
+        if (ui->additionalOptionsBox->isChecked()) {
+            QString exampleQ = ui->exampleInput->toPlainText();
+            QString notesQ = ui->notesInput->toPlainText();
+            if (!exampleQ.trimmed().isEmpty()) {
+                db->createNewExample(wordID, exampleQ.toStdString(), notesQ.toStdString());
+            }
+        }
+
+        accept(); // close dialog with success
+    } catch (const std::exception& ex) {
+        QMessageBox::critical(this, "Database Error", QString::fromStdString(ex.what()));
+    }
 }
 
