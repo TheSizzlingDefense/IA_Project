@@ -6,6 +6,7 @@ extern "C" {
 }
 #include <string>
 #include <vector>
+#include <utility>
 
 class DataBase
 {
@@ -52,6 +53,29 @@ public:
     bool createNewList(std::string listName, std::string targetLanguage, std::string description);
 
     std::vector<std::string> getVocabLists();
+    // Returns a vector of pairs (list_name, next_review_date_string or empty if none)
+    std::vector<std::pair<std::string, std::string>> getVocabListsWithNextReview();
+
+    struct DueCard {
+        int schedule_id;
+        int word_id;
+        int list_id;
+        std::string word;
+        std::string definition;
+        double ease_factor;
+        int interval_days;
+        int repetition_count;
+        std::string next_review_date;
+    };
+
+    // Get due cards (next_review_date <= now). If listID < 0, return for all lists.
+    std::vector<DueCard> getDueCards(int listID = -1);
+
+    // Update review schedule for a given word/list
+    bool updateReviewScheduleForWord(int wordID, int listID, int repetition_count, int interval_days, double ease_factor, const std::string& next_review_date);
+
+    // Record a study session entry
+    bool recordStudySession(int wordID, int listID, bool was_correct, int quality);
 
     bool createNewExample(int wordID, std::string exampleText = "", std::string contextNotes = "");
 

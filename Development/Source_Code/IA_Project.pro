@@ -13,7 +13,8 @@ SOURCES += \
     main.cpp \
     mainwindow.cpp \
     spacedrepetitioncalculator.cpp \
-    sqlite3.c
+    sqlite3.c \
+    studywindow.cpp
 
 HEADERS += \
     addcardwindow.h \
@@ -21,12 +22,14 @@ HEADERS += \
     database.h \
     mainwindow.h \
     spacedrepetitioncalculator.h \
-    sqlite3.h
+    sqlite3.h \
+    studywindow.h
 
 FORMS += \
     addcardwindow.ui \
     addlistwindow.ui \
-    mainwindow.ui
+    mainwindow.ui \
+    studywindow.ui
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin

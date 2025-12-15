@@ -349,6 +349,47 @@ std::vector<std::string> DataBase::getVocabLists() {
     return allVocabLists;
 }
 
+std::vector<std::pair<std::string, std::string>> DataBase::getVocabListsWithNextReview() {
+    std::vector<std::pair<std::string, std::string>> results;
+
+    const char* sql = "SELECT list_id, list_name FROM vocabulary_lists";
+    sqlite3_stmt* stmt = nullptr;
+    int rc = sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr);
+    if (rc != SQLITE_OK) {
+        throw std::runtime_error("Failed to prepare statement: " + std::string(sqlite3_errmsg(db)));
+    }
+
+    while ((rc = sqlite3_step(stmt)) == SQLITE_ROW) {
+        int listID = sqlite3_column_int(stmt, 0);
+        const unsigned char* txt = sqlite3_column_text(stmt, 1);
+        std::string listName = txt ? reinterpret_cast<const char*>(txt) : std::string("");
+
+        // Query earliest next_review_date for this list
+        const char* dateSql = "SELECT MIN(next_review_date) FROM review_schedule WHERE list_id = ?";
+        sqlite3_stmt* dstmt = nullptr;
+        int drc = sqlite3_prepare_v2(db, dateSql, -1, &dstmt, nullptr);
+        if (drc != SQLITE_OK) {
+            sqlite3_finalize(stmt);
+            throw std::runtime_error("Failed to prepare statement: " + std::string(sqlite3_errmsg(db)));
+        }
+
+        sqlite3_bind_int(dstmt, 1, listID);
+        drc = sqlite3_step(dstmt);
+        std::string nextReview;
+        if (drc == SQLITE_ROW) {
+            const unsigned char* dtext = sqlite3_column_text(dstmt, 0);
+            if (dtext) nextReview = reinterpret_cast<const char*>(dtext);
+        }
+
+        sqlite3_finalize(dstmt);
+
+        results.emplace_back(listName, nextReview);
+    }
+
+    sqlite3_finalize(stmt);
+    return results;
+}
+
 bool DataBase::createNewExample(int wordID, std::string exampleText, std::string contextNotes) {
     const char* sql = "INSERT INTO word_examples (word_id, example_text, context_notes, date_added) VALUES (?, ? , ?, datetime('now'));";
 
@@ -613,4 +654,100 @@ int DataBase::addWordAndSetup(int listID, const std::string& word, const std::st
         try { rollbackTransaction(); } catch (...) {}
         throw; // rethrow original exception
     }
+}
+
+std::vector<DataBase::DueCard> DataBase::getDueCards(int listID) {
+    std::vector<DueCard> out;
+    const char* sqlAll =
+        "SELECT rs.schedule_id, rs.word_id, rs.list_id, w.word, w.definition, rs.ease_factor, rs.interval_days, rs.repetition_count, rs.next_review_date "
+        "FROM review_schedule rs JOIN words w ON rs.word_id = w.word_id "
+        "WHERE rs.next_review_date <= datetime('now') "
+        "ORDER BY rs.next_review_date ASC;";
+
+    const char* sqlList =
+        "SELECT rs.schedule_id, rs.word_id, rs.list_id, w.word, w.definition, rs.ease_factor, rs.interval_days, rs.repetition_count, rs.next_review_date "
+        "FROM review_schedule rs JOIN words w ON rs.word_id = w.word_id "
+        "WHERE rs.list_id = ? AND rs.next_review_date <= datetime('now') "
+        "ORDER BY rs.next_review_date ASC;";
+
+    const char* sql = (listID < 0) ? sqlAll : sqlList;
+    sqlite3_stmt* stmt = nullptr;
+    int rc = sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr);
+    if (rc != SQLITE_OK) {
+        throw std::runtime_error("Failed to prepare statement: " + std::string(sqlite3_errmsg(db)));
+    }
+
+    if (listID >= 0) sqlite3_bind_int(stmt, 1, listID);
+
+    while ((rc = sqlite3_step(stmt)) == SQLITE_ROW) {
+        DueCard c;
+        c.schedule_id = sqlite3_column_int(stmt, 0);
+        c.word_id = sqlite3_column_int(stmt, 1);
+        c.list_id = sqlite3_column_int(stmt, 2);
+        const unsigned char* wtxt = sqlite3_column_text(stmt, 3);
+        c.word = wtxt ? reinterpret_cast<const char*>(wtxt) : std::string("");
+        const unsigned char* dtxt = sqlite3_column_text(stmt, 4);
+        c.definition = dtxt ? reinterpret_cast<const char*>(dtxt) : std::string("");
+        c.ease_factor = sqlite3_column_double(stmt, 5);
+        c.interval_days = sqlite3_column_int(stmt, 6);
+        c.repetition_count = sqlite3_column_int(stmt, 7);
+        const unsigned char* ndtxt = sqlite3_column_text(stmt, 8);
+        c.next_review_date = ndtxt ? reinterpret_cast<const char*>(ndtxt) : std::string("");
+        out.push_back(std::move(c));
+    }
+
+    sqlite3_finalize(stmt);
+    return out;
+}
+
+bool DataBase::updateReviewScheduleForWord(int wordID, int listID, int repetition_count, int interval_days, double ease_factor, const std::string& next_review_date) {
+    const char* sql = "UPDATE review_schedule SET repetition_count = ?, interval_days = ?, ease_factor = ?, next_review_date = ? WHERE word_id = ? AND list_id = ?;";
+    sqlite3_stmt* stmt = nullptr;
+    int rc = sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr);
+    if (rc != SQLITE_OK) {
+        throw std::runtime_error("Failed to prepare statement: " + std::string(sqlite3_errmsg(db)));
+    }
+
+    sqlite3_bind_int(stmt, 1, repetition_count);
+    sqlite3_bind_int(stmt, 2, interval_days);
+    sqlite3_bind_double(stmt, 3, ease_factor);
+    sqlite3_bind_text(stmt, 4, next_review_date.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_int(stmt, 5, wordID);
+    sqlite3_bind_int(stmt, 6, listID);
+
+    rc = sqlite3_step(stmt);
+    if (rc != SQLITE_DONE) {
+        sqlite3_finalize(stmt);
+        throw std::runtime_error("Execution failed: " + std::string(sqlite3_errmsg(db)));
+    }
+
+    sqlite3_finalize(stmt);
+    return true;
+}
+
+bool DataBase::recordStudySession(int wordID, int listID, bool was_correct, int quality) {
+    const char* sql = "INSERT INTO study_sessions (word_id, review_date, was_correct, response_time, confidence_score, study_mode, list_id, notes, device_info) VALUES (?, datetime('now'), ?, ?, ?, ?, ?, ?, ?);";
+    sqlite3_stmt* stmt = nullptr;
+    int rc = sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr);
+    if (rc != SQLITE_OK) {
+        throw std::runtime_error("Failed to prepare statement: " + std::string(sqlite3_errmsg(db)));
+    }
+
+    sqlite3_bind_int(stmt, 1, wordID);
+    sqlite3_bind_int(stmt, 2, was_correct ? 1 : 0);
+    sqlite3_bind_int(stmt, 3, 0); // response_time unknown
+    sqlite3_bind_int(stmt, 4, quality);
+    sqlite3_bind_text(stmt, 5, "flashcard", -1, SQLITE_TRANSIENT);
+    sqlite3_bind_int(stmt, 6, listID);
+    sqlite3_bind_text(stmt, 7, "", -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 8, "", -1, SQLITE_TRANSIENT);
+
+    rc = sqlite3_step(stmt);
+    if (rc != SQLITE_DONE) {
+        sqlite3_finalize(stmt);
+        throw std::runtime_error("Execution failed: " + std::string(sqlite3_errmsg(db)));
+    }
+
+    sqlite3_finalize(stmt);
+    return true;
 }

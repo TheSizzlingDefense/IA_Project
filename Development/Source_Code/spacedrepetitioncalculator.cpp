@@ -33,5 +33,5 @@ void SpacedRepetitionCalculator::calculateNextReview(int quality) {
         }
     }
 
-    nextReview = time(nullptr) * (interval * 24 * 3600);
+    nextReview = time(nullptr) + (interval * 24 * 3600);
 }

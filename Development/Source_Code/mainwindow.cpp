@@ -2,6 +2,8 @@
 #include "ui_mainwindow.h"
 #include "addcardwindow.h"
 #include "addlistwindow.h"
+#include <algorithm>
+#include "studywindow.h"
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -13,10 +15,32 @@ MainWindow::MainWindow(QWidget *parent)
         "QListWidget::item:selected { color: black; }"
         );
     ui->deckList->clear();
-    std::vector<std::string> vocabLists = db.getVocabLists();
-    for (size_t i = 0; i < vocabLists.size(); i++) {
-        ui->deckList->addItem(QString::fromStdString(vocabLists.at(i)));
+    // Get lists with their next review date and sort by earliest review first
+    auto lists = db.getVocabListsWithNextReview();
+
+    // sort: empty dates (no reviews) go to the end; otherwise sort by datetime string ascending
+    std::sort(lists.begin(), lists.end(), [](const auto &a, const auto &b) {
+        const std::string &da = a.second;
+        const std::string &dbs = b.second;
+        if (da.empty() && dbs.empty()) return a.first < b.first; // both empty -> alphabetical
+        if (da.empty()) return false; // a goes after b
+        if (dbs.empty()) return true;  // a goes before b
+        return da < dbs; // ISO-like datetime textual compare works for 'YYYY-MM-DD HH:MM:SS'
+    });
+
+    for (const auto &p : lists) {
+        QString label = QString::fromStdString(p.first);
+        if (!p.second.empty()) {
+            label += "  — Next: ";
+            label += QString::fromStdString(p.second);
+        } else {
+            label += "  — Next: (no scheduled reviews)";
+        }
+        ui->deckList->addItem(label);
     }
+
+    // connect double-click to start study
+    connect(ui->deckList, &QListWidget::itemDoubleClicked, this, &MainWindow::startStudy);
 }
 
 MainWindow::~MainWindow() {
@@ -42,8 +66,38 @@ DataBase* MainWindow::getDB() {
 
 void MainWindow::updatingList() {
     ui->deckList->clear();
-    std::vector<std::string> vocabLists = db.getVocabLists();
-    for (size_t i = 0; i < vocabLists.size(); i++) {
-        ui->deckList->addItem(QString::fromStdString(vocabLists.at(i)));
+    auto lists = db.getVocabListsWithNextReview();
+    std::sort(lists.begin(), lists.end(), [](const auto &a, const auto &b) {
+        const std::string &da = a.second;
+        const std::string &dbs = b.second;
+        if (da.empty() && dbs.empty()) return a.first < b.first;
+        if (da.empty()) return false;
+        if (dbs.empty()) return true;
+        return da < dbs;
+    });
+
+    for (const auto &p : lists) {
+        QString label = QString::fromStdString(p.first);
+        if (!p.second.empty()) {
+            label += "  — Next: ";
+            label += QString::fromStdString(p.second);
+        } else {
+            label += "  — Next: (no scheduled reviews)";
+        }
+        ui->deckList->addItem(label);
     }
+}
+
+void MainWindow::startStudy() {
+    QListWidgetItem* item = ui->deckList->currentItem();
+    if (!item) return;
+    // extract list name before the separator '  — Next:'
+    QString text = item->text();
+    QStringList parts = text.split("  — Next:");
+    QString listName = parts.at(0).trimmed();
+    int listID = db.getListId(listName.toStdString());
+    StudyWindow* w = new StudyWindow(&db, listID, this);
+    w->setModal(true);
+    w->setAttribute(Qt::WA_DeleteOnClose);
+    w->show();
 }

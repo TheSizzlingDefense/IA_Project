@@ -26,6 +26,7 @@ private slots:
     void on_creatDeck_clicked();
 
     void updatingList();
+    void startStudy();
 
 private:
     Ui::MainWindow *ui;

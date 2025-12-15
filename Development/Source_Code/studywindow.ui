@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>StudyWindow</class>
+ <widget class="QWidget" name="StudyWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>600</width>
+    <height>300</height>
+   </rect>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <widget class="QLabel" name="wordLabel">
+     <property name="text">
+      <string>Word</string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignCenter</set>
+     </property>
+     <property name="styleSheet">
+      <string>font-size: 20pt; font-weight: bold;</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QPushButton" name="revealButton">
+     <property name="text">
+      <string>Reveal</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QLabel" name="definitionLabel">
+     <property name="text">
+      <string>Definition</string>
+     </property>
+     <property name="wordWrap">
+      <bool>true</bool>
+     </property>
+     <property name="visible">
+      <bool>false</bool>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="buttonLayout">
+     <item>
+      <widget class="QPushButton" name="againButton">
+       <property name="text">
+        <string>Again</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="hardButton">
+       <property name="text">
+        <string>Hard</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="goodButton">
+       <property name="text">
+        <string>Good</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="easyButton">
+       <property name="text">
+        <string>Easy</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
