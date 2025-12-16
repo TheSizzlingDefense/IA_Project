@@ -1,6 +1,8 @@
 #include "database.h"
 #include <stdexcept>
 #include <vector>
+#include <sstream>
+#include <cmath>
 
 
 DataBase::DataBase(const std::string& dbPath) {
@@ -224,6 +226,84 @@ bool DataBase::createExampleTable() {
     }
 
     return true;
+}
+
+std::string DataBase::getStudySessionSummary() {
+    std::ostringstream out;
+
+    const char* totalSql = "SELECT COUNT(*) FROM study_sessions;";
+    sqlite3_stmt* stmt = nullptr;
+    int rc = sqlite3_prepare_v2(db, totalSql, -1, &stmt, nullptr);
+    long long total = 0;
+    if (rc == SQLITE_OK) {
+        if (sqlite3_step(stmt) == SQLITE_ROW) {
+            total = sqlite3_column_int64(stmt, 0);
+        }
+    }
+    sqlite3_finalize(stmt);
+
+    const char* correctSql = "SELECT COUNT(*) FROM study_sessions WHERE was_correct = 1;";
+    rc = sqlite3_prepare_v2(db, correctSql, -1, &stmt, nullptr);
+    long long correct = 0;
+    if (rc == SQLITE_OK) {
+        if (sqlite3_step(stmt) == SQLITE_ROW) {
+            correct = sqlite3_column_int64(stmt, 0);
+        }
+    }
+    sqlite3_finalize(stmt);
+
+    const char* avgRespSql = "SELECT AVG(response_time) FROM study_sessions WHERE response_time IS NOT NULL;";
+    rc = sqlite3_prepare_v2(db, avgRespSql, -1, &stmt, nullptr);
+    double avgResp = 0.0;
+    bool hasAvgResp = false;
+    if (rc == SQLITE_OK) {
+        if (sqlite3_step(stmt) == SQLITE_ROW) {
+            if (sqlite3_column_type(stmt,0) != SQLITE_NULL) {
+                avgResp = sqlite3_column_double(stmt, 0);
+                hasAvgResp = true;
+            }
+        }
+    }
+    sqlite3_finalize(stmt);
+
+    const char* avgConfSql = "SELECT AVG(confidence_score) FROM study_sessions WHERE confidence_score IS NOT NULL;";
+    rc = sqlite3_prepare_v2(db, avgConfSql, -1, &stmt, nullptr);
+    double avgConf = 0.0;
+    bool hasAvgConf = false;
+    if (rc == SQLITE_OK) {
+        if (sqlite3_step(stmt) == SQLITE_ROW) {
+            if (sqlite3_column_type(stmt,0) != SQLITE_NULL) {
+                avgConf = sqlite3_column_double(stmt, 0);
+                hasAvgConf = true;
+            }
+        }
+    }
+    sqlite3_finalize(stmt);
+
+    out << "Study Sessions Summary:\n";
+    out << "Total sessions: " << total << "\n";
+    out << "Correct responses: " << correct << "\n";
+    if (total > 0) {
+        double pct = (100.0 * static_cast<double>(correct)) / static_cast<double>(total);
+        out << "Percent correct: " << std::round(pct * 100.0) / 100.0 << "%\n";
+    }
+    if (hasAvgResp) out << "Average response time (s): " << std::round(avgResp * 100.0) / 100.0 << "\n";
+    if (hasAvgConf) out << "Average confidence (1-5): " << std::round(avgConf * 100.0) / 100.0 << "\n";
+
+    // breakdown by study_mode
+    const char* modeSql = "SELECT COALESCE(study_mode, 'unknown'), COUNT(*) FROM study_sessions GROUP BY study_mode;";
+    rc = sqlite3_prepare_v2(db, modeSql, -1, &stmt, nullptr);
+    if (rc == SQLITE_OK) {
+        out << "Sessions by mode:\n";
+        while (sqlite3_step(stmt) == SQLITE_ROW) {
+            const unsigned char* mode = sqlite3_column_text(stmt, 0);
+            long long cnt = sqlite3_column_int64(stmt, 1);
+            out << "  " << (mode ? reinterpret_cast<const char*>(mode) : "unknown") << ": " << cnt << "\n";
+        }
+    }
+    sqlite3_finalize(stmt);
+
+    return out.str();
 }
 
 bool DataBase::createListProgressTable() {

@@ -4,6 +4,10 @@
 #include "addlistwindow.h"
 #include <algorithm>
 #include "studywindow.h"
+#include <QDialog>
+#include <QVBoxLayout>
+#include <QTextEdit>
+#include <QPushButton>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -135,4 +139,23 @@ void MainWindow::on_listDecks_clicked() {
     ui->deckList->setVisible(true);
     pendingListID = -1;
     pendingListName.clear();
+}
+
+void MainWindow::on_showStats_clicked() {
+    // Use the database helper to build a summary string and show it in a dialog
+    std::string summary = db.getStudySessionSummary();
+
+    QDialog dlg(this);
+    dlg.setWindowTitle("Study Sessions Summary");
+    QVBoxLayout* layout = new QVBoxLayout(&dlg);
+    QTextEdit* view = new QTextEdit(&dlg);
+    view->setReadOnly(true);
+    view->setPlainText(QString::fromStdString(summary));
+    layout->addWidget(view);
+    QPushButton* closeBtn = new QPushButton("Close", &dlg);
+    QObject::connect(closeBtn, &QPushButton::clicked, &dlg, &QDialog::accept);
+    layout->addWidget(closeBtn);
+
+    dlg.resize(480, 320);
+    dlg.exec();
 }

@@ -33,6 +33,7 @@ private slots:
     void deckListDoubleClicked(QListWidgetItem* item);
     void on_startStudyButton_clicked();
     void on_listDecks_clicked();
+    void on_showStats_clicked();
 
 private:
     Ui::MainWindow *ui;

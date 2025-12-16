@@ -80,6 +80,9 @@ public:
     // Record a study session with an explicit study mode (e.g. "flashcard", "multiple_choice")
     bool recordStudySession(int wordID, int listID, bool was_correct, int quality, const std::string& study_mode);
 
+    // Returns a human-readable summary string of study sessions (counts, averages, breakdowns)
+    std::string getStudySessionSummary();
+
     // Get random words (id and definition) from a list to be used as distractors.
     // excludeWordID may be -1 to not exclude anything.
     std::vector<std::pair<int, std::string>> getRandomWordsInList(int listID, int excludeWordID, int count);
