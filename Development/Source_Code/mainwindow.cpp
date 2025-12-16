@@ -39,8 +39,11 @@ MainWindow::MainWindow(QWidget *parent)
         ui->deckList->addItem(label);
     }
 
-    // connect double-click to start study
-    connect(ui->deckList, &QListWidget::itemDoubleClicked, this, &MainWindow::startStudy);
+    // connect double-click to show mode selection panel
+    connect(ui->deckList, &QListWidget::itemDoubleClicked, this, &MainWindow::deckListDoubleClicked);
+    // connect mode panel buttons
+    connect(ui->startStudyButton, &QPushButton::clicked, this, &MainWindow::on_startStudyButton_clicked);
+    // don't manually connect the top 'Decks' button — use Qt auto-connect by naming the slot `on_listDecks_clicked`
 }
 
 MainWindow::~MainWindow() {
@@ -100,4 +103,36 @@ void MainWindow::startStudy() {
     w->setModal(true);
     w->setAttribute(Qt::WA_DeleteOnClose);
     w->show();
+}
+
+void MainWindow::deckListDoubleClicked(QListWidgetItem* item) {
+    if (!item) return;
+    QString text = item->text();
+    QStringList parts = text.split("  — Next:");
+    pendingListName = parts.at(0).trimmed();
+    pendingListID = db.getListId(pendingListName.toStdString());
+
+    // update mode panel label and show the panel
+    ui->selectedDeckLabel->setText(pendingListName);
+    ui->modePanel->setVisible(true);
+    ui->deckList->setVisible(false);
+}
+
+void MainWindow::on_startStudyButton_clicked() {
+    if (pendingListID < 0) return;
+    StudyWindow* w = new StudyWindow(&db, pendingListID, this);
+    // set mode based on combo box
+    QString mode = ui->studyModeComboBox->currentText();
+    w->setStudyModeFromString(mode);
+    w->setModal(true);
+    w->setAttribute(Qt::WA_DeleteOnClose);
+    w->show();
+}
+
+void MainWindow::on_listDecks_clicked() {
+    // hide mode panel and show deck list (invoked by top 'Decks' button)
+    ui->modePanel->setVisible(false);
+    ui->deckList->setVisible(true);
+    pendingListID = -1;
+    pendingListName.clear();
 }

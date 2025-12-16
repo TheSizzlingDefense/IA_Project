@@ -77,6 +77,13 @@ public:
     // Record a study session entry
     bool recordStudySession(int wordID, int listID, bool was_correct, int quality);
 
+    // Record a study session with an explicit study mode (e.g. "flashcard", "multiple_choice")
+    bool recordStudySession(int wordID, int listID, bool was_correct, int quality, const std::string& study_mode);
+
+    // Get random words (id and definition) from a list to be used as distractors.
+    // excludeWordID may be -1 to not exclude anything.
+    std::vector<std::pair<int, std::string>> getRandomWordsInList(int listID, int excludeWordID, int count);
+
     bool createNewExample(int wordID, std::string exampleText = "", std::string contextNotes = "");
 
     bool createNewRelation(int word1ID, int word2ID, std::string relationType = "");

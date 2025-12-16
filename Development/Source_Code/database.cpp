@@ -725,7 +725,7 @@ bool DataBase::updateReviewScheduleForWord(int wordID, int listID, int repetitio
     return true;
 }
 
-bool DataBase::recordStudySession(int wordID, int listID, bool was_correct, int quality) {
+bool DataBase::recordStudySession(int wordID, int listID, bool was_correct, int quality, const std::string& study_mode) {
     const char* sql = "INSERT INTO study_sessions (word_id, review_date, was_correct, response_time, confidence_score, study_mode, list_id, notes, device_info) VALUES (?, datetime('now'), ?, ?, ?, ?, ?, ?, ?);";
     sqlite3_stmt* stmt = nullptr;
     int rc = sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr);
@@ -736,8 +736,12 @@ bool DataBase::recordStudySession(int wordID, int listID, bool was_correct, int 
     sqlite3_bind_int(stmt, 1, wordID);
     sqlite3_bind_int(stmt, 2, was_correct ? 1 : 0);
     sqlite3_bind_int(stmt, 3, 0); // response_time unknown
-    sqlite3_bind_int(stmt, 4, quality);
-    sqlite3_bind_text(stmt, 5, "flashcard", -1, SQLITE_TRANSIENT);
+    // confidence_score must be between 1 and 5 (CHECK constraint). Clamp the provided quality.
+    int confScore = quality;
+    if (confScore < 1) confScore = 1;
+    if (confScore > 5) confScore = 5;
+    sqlite3_bind_int(stmt, 4, confScore);
+    sqlite3_bind_text(stmt, 5, study_mode.c_str(), -1, SQLITE_TRANSIENT);
     sqlite3_bind_int(stmt, 6, listID);
     sqlite3_bind_text(stmt, 7, "", -1, SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt, 8, "", -1, SQLITE_TRANSIENT);
@@ -750,4 +754,60 @@ bool DataBase::recordStudySession(int wordID, int listID, bool was_correct, int 
 
     sqlite3_finalize(stmt);
     return true;
+}
+
+// Backwards-compatible wrapper that records as flashcard mode
+bool DataBase::recordStudySession(int wordID, int listID, bool was_correct, int quality) {
+    return recordStudySession(wordID, listID, was_correct, quality, std::string("flashcard"));
+}
+
+std::vector<std::pair<int, std::string>> DataBase::getRandomWordsInList(int listID, int excludeWordID, int count) {
+    std::vector<std::pair<int, std::string>> out;
+    const char* sql_with_exclude =
+        "SELECT w.word_id, w.definition FROM list_words lw JOIN words w ON lw.word_id = w.word_id WHERE lw.list_id = ? AND w.word_id != ? ORDER BY RANDOM() LIMIT ?;";
+    const char* sql_no_exclude =
+        "SELECT w.word_id, w.definition FROM list_words lw JOIN words w ON lw.word_id = w.word_id WHERE lw.list_id = ? ORDER BY RANDOM() LIMIT ?;";
+    const char* sql_global_with_exclude =
+        "SELECT w.word_id, w.definition FROM words w WHERE w.word_id != ? ORDER BY RANDOM() LIMIT ?;";
+    const char* sql_global_no_exclude =
+        "SELECT w.word_id, w.definition FROM words w ORDER BY RANDOM() LIMIT ?;";
+
+    sqlite3_stmt* stmt = nullptr;
+    int rc;
+    if (listID >= 0) {
+        if (excludeWordID >= 0) {
+            rc = sqlite3_prepare_v2(db, sql_with_exclude, -1, &stmt, nullptr);
+            if (rc != SQLITE_OK) throw std::runtime_error("Failed to prepare statement: " + std::string(sqlite3_errmsg(db)));
+            sqlite3_bind_int(stmt, 1, listID);
+            sqlite3_bind_int(stmt, 2, excludeWordID);
+            sqlite3_bind_int(stmt, 3, count);
+        } else {
+            rc = sqlite3_prepare_v2(db, sql_no_exclude, -1, &stmt, nullptr);
+            if (rc != SQLITE_OK) throw std::runtime_error("Failed to prepare statement: " + std::string(sqlite3_errmsg(db)));
+            sqlite3_bind_int(stmt, 1, listID);
+            sqlite3_bind_int(stmt, 2, count);
+        }
+    } else {
+        // global across all words
+        if (excludeWordID >= 0) {
+            rc = sqlite3_prepare_v2(db, sql_global_with_exclude, -1, &stmt, nullptr);
+            if (rc != SQLITE_OK) throw std::runtime_error("Failed to prepare statement: " + std::string(sqlite3_errmsg(db)));
+            sqlite3_bind_int(stmt, 1, excludeWordID);
+            sqlite3_bind_int(stmt, 2, count);
+        } else {
+            rc = sqlite3_prepare_v2(db, sql_global_no_exclude, -1, &stmt, nullptr);
+            if (rc != SQLITE_OK) throw std::runtime_error("Failed to prepare statement: " + std::string(sqlite3_errmsg(db)));
+            sqlite3_bind_int(stmt, 1, count);
+        }
+    }
+
+    while ((rc = sqlite3_step(stmt)) == SQLITE_ROW) {
+        int wid = sqlite3_column_int(stmt, 0);
+        const unsigned char* dtxt = sqlite3_column_text(stmt, 1);
+        std::string def = dtxt ? reinterpret_cast<const char*>(dtxt) : std::string("");
+        out.emplace_back(wid, def);
+    }
+
+    sqlite3_finalize(stmt);
+    return out;
 }

@@ -161,6 +161,51 @@
         </property>
        </widget>
       </item>
+    <item>
+     <widget class="QWidget" name="modePanel">
+      <property name="visible">
+       <bool>false</bool>
+      </property>
+      <layout class="QVBoxLayout" name="modePanelLayout">
+       <item>
+        <widget class="QLabel" name="selectedDeckLabel">
+         <property name="text">
+        <string>Selected Deck</string>
+         </property>
+         <property name="alignment">
+        <set>Qt::AlignCenter</set>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QComboBox" name="studyModeComboBox">
+         <item>
+        <property name="text">
+         <string>Flashcard</string>
+        </property>
+         </item>
+         <item>
+        <property name="text">
+         <string>Multiple Choice</string>
+        </property>
+         </item>
+        </widget>
+       </item>
+       <item>
+        <layout class="QHBoxLayout" name="modeButtonsLayout">
+         <item>
+        <widget class="QPushButton" name="startStudyButton">
+         <property name="text">
+          <string>Start Study</string>
+         </property>
+        </widget>
+         </item>
+           <!-- backToDeckButton removed; top 'Decks' button will be used instead -->
+        </layout>
+       </item>
+      </layout>
+     </widget>
+    </item>
       <item>
        <spacer name="horizontal_spacer_middle_right">
         <property name="orientation">

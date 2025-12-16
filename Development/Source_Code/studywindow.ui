@@ -24,6 +24,23 @@
      </property>
     </widget>
    </item>
+    <item>
+     <widget class="QComboBox" name="modeComboBox">
+      <property name="editable">
+        <bool>false</bool>
+      </property>
+      <item>
+        <property name="text">
+         <string>Flashcard</string>
+        </property>
+      </item>
+      <item>
+        <property name="text">
+         <string>Multiple Choice</string>
+        </property>
+      </item>
+     </widget>
+    </item>
    <item>
     <widget class="QPushButton" name="revealButton">
      <property name="text">
@@ -44,6 +61,52 @@
      </property>
     </widget>
    </item>
+    <item>
+     <widget class="QWidget" name="choicesWidget">
+      <layout class="QGridLayout" name="choicesGrid">
+        <item row="0" column="0">
+         <widget class="QPushButton" name="choiceButton1">
+          <property name="text">
+            <string>Choice 1</string>
+          </property>
+          <property name="visible">
+            <bool>false</bool>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="1">
+         <widget class="QPushButton" name="choiceButton2">
+          <property name="text">
+            <string>Choice 2</string>
+          </property>
+          <property name="visible">
+            <bool>false</bool>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="0">
+         <widget class="QPushButton" name="choiceButton3">
+          <property name="text">
+            <string>Choice 3</string>
+          </property>
+          <property name="visible">
+            <bool>false</bool>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="1">
+         <widget class="QPushButton" name="choiceButton4">
+          <property name="text">
+            <string>Choice 4</string>
+          </property>
+          <property name="visible">
+            <bool>false</bool>
+          </property>
+         </widget>
+        </item>
+      </layout>
+     </widget>
+    </item>
    <item>
     <layout class="QHBoxLayout" name="buttonLayout">
      <item>

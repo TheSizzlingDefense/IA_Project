@@ -3,6 +3,9 @@
 
 #include <QMainWindow>
 #include "database.h"
+#include <QListWidget>
+#include <QListWidgetItem>
+#include <QString>
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -27,10 +30,16 @@ private slots:
 
     void updatingList();
     void startStudy();
+    void deckListDoubleClicked(QListWidgetItem* item);
+    void on_startStudyButton_clicked();
+    void on_listDecks_clicked();
 
 private:
     Ui::MainWindow *ui;
 
     DataBase db;
+    // pending selection when opening mode panel
+    int pendingListID = -1;
+    QString pendingListName;
 };
 #endif // MAINWINDOW_H

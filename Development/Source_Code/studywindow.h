@@ -3,6 +3,7 @@
 
 #include <QDialog>
 #include <QLabel>
+#include <QString>
 #include <QPushButton>
 #include <QVBoxLayout>
 #include <QHBoxLayout>
@@ -18,6 +19,8 @@ class StudyWindow : public QDialog {
     Q_OBJECT
 public:
     explicit StudyWindow(DataBase* db, int listID = -1, QWidget* parent = nullptr);
+    // allow external code to set the study mode before showing window
+    void setStudyModeFromString(const QString& modeStr);
 
 private slots:
     void onReveal();
@@ -25,6 +28,8 @@ private slots:
     void onRateHard();
     void onRateGood();
     void onRateEasy();
+    void onModeChanged(int index);
+    void onChoiceSelected();
 
 private:
     void loadDueCards();
@@ -37,6 +42,11 @@ private:
     int listID;
     std::vector<DataBase::DueCard> cards;
     size_t currentIndex;
+    enum class StudyMode { Flashcard, MultipleChoice } mode;
+    // choice buttons (set up from UI)
+    QPushButton* choiceButtons[4];
+    // helper: index of correct choice when in multiple choice
+    int correctChoiceIndex;
 };
 
 #endif // STUDYWINDOW_H
