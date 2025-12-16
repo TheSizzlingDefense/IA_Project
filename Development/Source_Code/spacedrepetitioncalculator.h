@@ -12,12 +12,19 @@ public:
 
     bool isDue() const;
 
+    static constexpr double MIN_EF = 1.3;
+    static constexpr double MAX_EF = 2.5;
+
     double getEasinessFactor() const {return easinessFactor; };
     int getRepetitions() const { return repetitions; };
     int getInterval() const { return interval; };
     time_t getNextReview() const { return nextReview; };
 
-    void setEasinessFactor(double ef) { easinessFactor = ef; };
+    void setEasinessFactor(double ef) {
+        if (ef < MIN_EF) ef = MIN_EF;
+        if (ef > MAX_EF) ef = MAX_EF;
+        easinessFactor = ef;
+    };
     void setRepetitions(int rep) { repetitions = rep; };
     void setInterval(int intv) { interval = intv; };
     void setNextReview(time_t next) { nextReview = next; };

@@ -790,7 +790,11 @@ bool DataBase::updateReviewScheduleForWord(int wordID, int listID, int repetitio
 
     sqlite3_bind_int(stmt, 1, repetition_count);
     sqlite3_bind_int(stmt, 2, interval_days);
-    sqlite3_bind_double(stmt, 3, ease_factor);
+    // Ensure we don't violate the CHECK constraint on ease_factor (1.3 - 2.5)
+    double ef = ease_factor;
+    if (ef < 1.3) ef = 1.3;
+    if (ef > 2.5) ef = 2.5;
+    sqlite3_bind_double(stmt, 3, ef);
     sqlite3_bind_text(stmt, 4, next_review_date.c_str(), -1, SQLITE_TRANSIENT);
     sqlite3_bind_int(stmt, 5, wordID);
     sqlite3_bind_int(stmt, 6, listID);

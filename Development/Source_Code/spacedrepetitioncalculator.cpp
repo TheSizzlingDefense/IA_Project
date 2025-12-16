@@ -14,8 +14,11 @@ void SpacedRepetitionCalculator::calculateNextReview(int quality) {
 
     easinessFactor = easinessFactor + (0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02));
 
-    if (easinessFactor < 1.3) {
-        easinessFactor = 1.3;
+    if (easinessFactor < SpacedRepetitionCalculator::MIN_EF) {
+        easinessFactor = SpacedRepetitionCalculator::MIN_EF;
+    }
+    if (easinessFactor > SpacedRepetitionCalculator::MAX_EF) {
+        easinessFactor = SpacedRepetitionCalculator::MAX_EF;
     }
 
     if (quality < 3) {
