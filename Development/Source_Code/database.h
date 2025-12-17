@@ -7,6 +7,7 @@ extern "C" {
 #include <string>
 #include <vector>
 #include <utility>
+#include <tuple>
 
 class DataBase
 {
@@ -86,6 +87,9 @@ public:
     // Get random words (id and definition) from a list to be used as distractors.
     // excludeWordID may be -1 to not exclude anything.
     std::vector<std::pair<int, std::string>> getRandomWordsInList(int listID, int excludeWordID, int count);
+
+    // Return all words in a list (word_id, word_text, definition). If listID < 0 return all words.
+    std::vector<std::tuple<int, std::string, std::string>> getWordsInList(int listID);
 
     bool createNewExample(int wordID, std::string exampleText = "", std::string contextNotes = "");
 

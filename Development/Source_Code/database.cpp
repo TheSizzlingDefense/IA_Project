@@ -895,3 +895,34 @@ std::vector<std::pair<int, std::string>> DataBase::getRandomWordsInList(int list
     sqlite3_finalize(stmt);
     return out;
 }
+
+std::vector<std::tuple<int, std::string, std::string>> DataBase::getWordsInList(int listID) {
+    std::vector<std::tuple<int, std::string, std::string>> out;
+    const char* sql_in_list =
+        "SELECT w.word_id, w.word, w.definition FROM list_words lw JOIN words w ON lw.word_id = w.word_id WHERE lw.list_id = ? ORDER BY lw.added_date ASC;";
+    const char* sql_all =
+        "SELECT w.word_id, w.word, w.definition FROM words w ORDER BY w.word ASC;";
+
+    sqlite3_stmt* stmt = nullptr;
+    int rc;
+    if (listID >= 0) {
+        rc = sqlite3_prepare_v2(db, sql_in_list, -1, &stmt, nullptr);
+        if (rc != SQLITE_OK) throw std::runtime_error("Failed to prepare statement: " + std::string(sqlite3_errmsg(db)));
+        sqlite3_bind_int(stmt, 1, listID);
+    } else {
+        rc = sqlite3_prepare_v2(db, sql_all, -1, &stmt, nullptr);
+        if (rc != SQLITE_OK) throw std::runtime_error("Failed to prepare statement: " + std::string(sqlite3_errmsg(db)));
+    }
+
+    while ((rc = sqlite3_step(stmt)) == SQLITE_ROW) {
+        int wid = sqlite3_column_int(stmt, 0);
+        const unsigned char* wtxt = sqlite3_column_text(stmt, 1);
+        const unsigned char* dtxt = sqlite3_column_text(stmt, 2);
+        std::string word = wtxt ? reinterpret_cast<const char*>(wtxt) : std::string("");
+        std::string def = dtxt ? reinterpret_cast<const char*>(dtxt) : std::string("");
+        out.emplace_back(wid, word, def);
+    }
+
+    sqlite3_finalize(stmt);
+    return out;
+}

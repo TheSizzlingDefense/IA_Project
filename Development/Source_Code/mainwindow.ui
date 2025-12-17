@@ -200,6 +200,13 @@
          </property>
         </widget>
          </item>
+         <item>
+        <widget class="QPushButton" name="viewAllButton">
+         <property name="text">
+          <string>View All</string>
+         </property>
+        </widget>
+         </item>
            <!-- backToDeckButton removed; top 'Decks' button will be used instead -->
         </layout>
        </item>

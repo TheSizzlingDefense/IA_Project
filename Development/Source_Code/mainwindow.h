@@ -34,6 +34,7 @@ private slots:
     void on_startStudyButton_clicked();
     void on_listDecks_clicked();
     void on_showStats_clicked();
+    void on_viewAllButton_clicked();
 
 private:
     Ui::MainWindow *ui;

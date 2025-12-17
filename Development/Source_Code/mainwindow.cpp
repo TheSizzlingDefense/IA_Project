@@ -8,6 +8,8 @@
 #include <QVBoxLayout>
 #include <QTextEdit>
 #include <QPushButton>
+#include <QMessageBox>
+#include <sstream>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -157,5 +159,38 @@ void MainWindow::on_showStats_clicked() {
     layout->addWidget(closeBtn);
 
     dlg.resize(480, 320);
+    dlg.exec();
+}
+
+void MainWindow::on_viewAllButton_clicked() {
+    if (pendingListID < 0) {
+        QMessageBox::information(this, "No Deck Selected", "Please select a deck first (double-click a deck).");
+        return;
+    }
+
+    // Fetch all words for the pending list and display them
+    auto entries = db.getWordsInList(pendingListID);
+    std::ostringstream out;
+    out << "Words in list: " << pendingListName.toStdString() << "\n\n";
+    for (const auto &t : entries) {
+        int wid;
+        std::string word, def;
+        std::tie(wid, word, def) = t;
+        out << "- " << word;
+        if (!def.empty()) out << ": " << def;
+        out << "\n";
+    }
+
+    QDialog dlg(this);
+    dlg.setWindowTitle("All Words");
+    QVBoxLayout* layout = new QVBoxLayout(&dlg);
+    QTextEdit* view = new QTextEdit(&dlg);
+    view->setReadOnly(true);
+    view->setPlainText(QString::fromStdString(out.str()));
+    layout->addWidget(view);
+    QPushButton* closeBtn = new QPushButton("Close", &dlg);
+    QObject::connect(closeBtn, &QPushButton::clicked, &dlg, &QDialog::accept);
+    layout->addWidget(closeBtn);
+    dlg.resize(520, 400);
     dlg.exec();
 }
