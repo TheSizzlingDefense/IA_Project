@@ -6,6 +6,9 @@
 #include <QListWidget>
 #include <QListWidgetItem>
 #include <QString>
+#include <QPushButton>
+#include <vector>
+#include "spacedrepetitioncalculator.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -37,13 +40,40 @@ private slots:
     void on_showStats_clicked();
     void on_viewAllButton_clicked();
     void on_deleteListButton_clicked();
+    
+    // Study panel slots
+    void onReveal();
+    void onRateAgain();
+    void onRateHard();
+    void onRateGood();
+    void onRateEasy();
+    void onStudyModeChanged(int index);
+    void onChoiceSelected();
 
 private:
+    void loadDueCards();
+    void loadRandomPracticeCards();
+    void showCurrentCard();
+    void applyRating(int quality);
+    void showDeckList();
+    void showModePanel();
+    void showStudyPanel();
+    
     Ui::MainWindow *ui;
 
     DataBase db;
     // pending selection when opening mode panel
     int pendingListID = -1;
     QString pendingListName;
+    
+    // Study session state
+    int currentStudyListID = -1;
+    std::vector<DataBase::DueCard> studyCards;
+    size_t currentCardIndex = 0;
+    enum class StudyMode { Flashcard, MultipleChoice } studyMode;
+    QPushButton* choiceButtons[4];
+    int correctChoiceIndex = -1;
+    bool isRandomPractice = false;
+    std::vector<int> recentlySeenWordIds; // Track recently seen words to avoid repetition
 };
 #endif // MAINWINDOW_H

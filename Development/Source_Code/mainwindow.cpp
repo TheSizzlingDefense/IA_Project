@@ -2,15 +2,16 @@
 #include "ui_mainwindow.h"
 #include "addcardwindow.h"
 #include "addlistwindow.h"
+#include "aicreatewindow.h"
 #include <algorithm>
-#include "studywindow.h"
 #include <QDialog>
 #include <QVBoxLayout>
 #include <QTextEdit>
 #include <QPushButton>
 #include <QMessageBox>
 #include <sstream>
-#include "aicreatewindow.h"
+#include <random>
+#include <ctime>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -21,6 +22,29 @@ MainWindow::MainWindow(QWidget *parent)
     ui->deckList->setStyleSheet(
         "QListWidget::item:selected { color: black; }"
         );
+    
+    // Initialize study mode
+    studyMode = StudyMode::Flashcard;
+    
+    // Set up choice buttons array
+    choiceButtons[0] = ui->choiceButton1;
+    choiceButtons[1] = ui->choiceButton2;
+    choiceButtons[2] = ui->choiceButton3;
+    choiceButtons[3] = ui->choiceButton4;
+    
+    // Connect study panel signals
+    connect(ui->revealButton, &QPushButton::clicked, this, &MainWindow::onReveal);
+    connect(ui->againButton, &QPushButton::clicked, this, &MainWindow::onRateAgain);
+    connect(ui->hardButton, &QPushButton::clicked, this, &MainWindow::onRateHard);
+    connect(ui->goodButton, &QPushButton::clicked, this, &MainWindow::onRateGood);
+    connect(ui->easyButton, &QPushButton::clicked, this, &MainWindow::onRateEasy);
+    connect(ui->studyModeComboBox2, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &MainWindow::onStudyModeChanged);
+    
+    // Connect choice buttons
+    for (int i = 0; i < 4; ++i) {
+        connect(choiceButtons[i], &QPushButton::clicked, this, &MainWindow::onChoiceSelected);
+    }
+    
     ui->deckList->clear();
     // Get lists with their next review date and sort by earliest review first
     auto lists = db.getVocabListsWithNextReview();
@@ -106,10 +130,13 @@ void MainWindow::startStudy() {
     QStringList parts = text.split("  — Next:");
     QString listName = parts.at(0).trimmed();
     int listID = db.getListId(listName.toStdString());
-    StudyWindow* w = new StudyWindow(&db, listID, this);
-    w->setModal(true);
-    w->setAttribute(Qt::WA_DeleteOnClose);
-    w->show();
+    
+    currentStudyListID = listID;
+    studyMode = StudyMode::Flashcard;
+    ui->studyModeComboBox2->setCurrentIndex(0);
+    
+    loadDueCards();
+    showStudyPanel();
 }
 
 void MainWindow::deckListDoubleClicked(QListWidgetItem* item) {
@@ -121,24 +148,26 @@ void MainWindow::deckListDoubleClicked(QListWidgetItem* item) {
 
     // update mode panel label and show the panel
     ui->selectedDeckLabel->setText(pendingListName);
-    ui->modePanel->setVisible(true);
-    ui->deckList->setVisible(false);
+    showModePanel();
 }
 
 void MainWindow::on_startStudyButton_clicked() {
     if (pendingListID < 0) return;
-    StudyWindow* w = new StudyWindow(&db, pendingListID, this);
-    // set mode based on combo box
+    
+    currentStudyListID = pendingListID;
+    
+    // Set mode based on combo box
     QString mode = ui->studyModeComboBox->currentText();
-    w->setStudyModeFromString(mode);
-    w->setModal(true);
-    w->setAttribute(Qt::WA_DeleteOnClose);
-    w->show();
+    studyMode = (mode == "Multiple Choice") ? StudyMode::MultipleChoice : StudyMode::Flashcard;
+    ui->studyModeComboBox2->setCurrentIndex(studyMode == StudyMode::MultipleChoice ? 1 : 0);
+    
+    loadDueCards();
+    showStudyPanel();
 }
 
 void MainWindow::on_listDecks_clicked() {
-    // hide mode panel and show deck list (invoked by top 'Decks' button)
-    ui->modePanel->setVisible(false);
+    // hide all panels and show deck list (invoked by top 'Decks' button)
+    showDeckList();
     ui->deckList->setVisible(true);
     pendingListID = -1;
     pendingListName.clear();
@@ -234,4 +263,267 @@ void MainWindow::on_deleteListButton_clicked() {
             QMessageBox::critical(this, "Error", "Failed to delete list: " + QString::fromStdString(e.what()));
         }
     }
+}
+
+// Study panel methods
+void MainWindow::loadDueCards() {
+    studyCards = db.getDueCards(currentStudyListID);
+    currentCardIndex = 0;
+    
+    // If no due cards, offer random practice mode
+    if (studyCards.empty()) {
+        QMessageBox::StandardButton reply;
+        reply = QMessageBox::question(this, "No Due Cards", 
+                                       "No cards are due for review right now.\n\n"
+                                       "Would you like to practice random words from this deck?",
+                                       QMessageBox::Yes | QMessageBox::No);
+        
+        if (reply == QMessageBox::Yes) {
+            loadRandomPracticeCards();
+        } else {
+            showDeckList();
+        }
+    } else {
+        isRandomPractice = false;
+        recentlySeenWordIds.clear();
+    }
+}
+
+void MainWindow::loadRandomPracticeCards() {
+    isRandomPractice = true;
+    recentlySeenWordIds.clear();
+    
+    // Get all words from the list
+    auto allWords = db.getWordsInList(currentStudyListID);
+    
+    if (allWords.empty()) {
+        QMessageBox::information(this, "No Words", "This deck has no words to practice.");
+        showDeckList();
+        return;
+    }
+    
+    // Create DueCard objects from all words (shuffle them)
+    std::vector<DataBase::DueCard> allCards;
+    for (const auto &wordTuple : allWords) {
+        DataBase::DueCard card;
+        card.word_id = std::get<0>(wordTuple);
+        card.word = std::get<1>(wordTuple);
+        card.definition = std::get<2>(wordTuple);
+        card.list_id = currentStudyListID;
+        card.ease_factor = 2.5;
+        card.interval_days = 0;
+        card.repetition_count = 0;
+        card.next_review_date = "";
+        card.schedule_id = -1;
+        allCards.push_back(card);
+    }
+    
+    // Shuffle the cards
+    std::random_device rd;
+    std::mt19937 g(rd());
+    std::shuffle(allCards.begin(), allCards.end(), g);
+    
+    // Take up to 20 cards for practice session
+    studyCards.clear();
+    size_t practiceSize = std::min(size_t(20), allCards.size());
+    for (size_t i = 0; i < practiceSize; ++i) {
+        studyCards.push_back(allCards[i]);
+    }
+    
+    currentCardIndex = 0;
+}
+
+void MainWindow::showCurrentCard() {
+    if (currentCardIndex >= studyCards.size()) {
+        if (isRandomPractice) {
+            // In random practice mode, keep cycling with new random cards
+            QMessageBox::StandardButton reply;
+            reply = QMessageBox::question(this, "Practice Session Complete", 
+                                           "You've completed this practice session.\n\n"
+                                           "Would you like to continue practicing?",
+                                           QMessageBox::Yes | QMessageBox::No);
+            
+            if (reply == QMessageBox::Yes) {
+                loadRandomPracticeCards();
+                showCurrentCard();
+                return;
+            }
+        }
+        QMessageBox::information(this, "Study Complete", "No more cards in this session.");
+        showDeckList();
+        return;
+    }
+
+    const auto &c = studyCards[currentCardIndex];
+    ui->studyWordLabel->setText(QString::fromStdString(c.word));
+    ui->studyDefinitionLabel->setText(QString::fromStdString(c.definition));
+    
+    // Add to recently seen list (keep last 5 words to avoid immediate repetition)
+    recentlySeenWordIds.push_back(c.word_id);
+    if (recentlySeenWordIds.size() > 5) {
+        recentlySeenWordIds.erase(recentlySeenWordIds.begin());
+    }
+
+    if (studyMode == StudyMode::Flashcard) {
+        ui->studyDefinitionLabel->setVisible(false);
+        ui->revealButton->setVisible(true);
+        ui->revealButton->setEnabled(true);
+        // hide choice buttons
+        for (int i = 0; i < 4; ++i) choiceButtons[i]->setVisible(false);
+        // show rating buttons in flashcard mode
+        ui->againButton->setVisible(true);
+        ui->hardButton->setVisible(true);
+        ui->goodButton->setVisible(true);
+        ui->easyButton->setVisible(true);
+    } else {
+        // Multiple choice mode
+        ui->studyDefinitionLabel->setVisible(false);
+        ui->revealButton->setVisible(false);
+        // hide rating buttons in multiple choice mode
+        ui->againButton->setVisible(false);
+        ui->hardButton->setVisible(false);
+        ui->goodButton->setVisible(false);
+        ui->easyButton->setVisible(false);
+
+        // prepare choices: correct + 3 distractors from DB
+        std::vector<std::string> options;
+        std::string correctText = c.definition.empty() ? c.word : c.definition;
+        options.push_back(correctText);
+
+        try {
+            auto distractors = db.getRandomWordsInList(currentStudyListID, c.word_id, 3);
+            for (auto &p : distractors) {
+                std::string d = p.second.empty() ? std::string("") : p.second;
+                if (d.empty()) d = std::to_string(p.first);
+                options.push_back(d);
+            }
+        } catch (...) {
+            // ignore DB errors, continue with whatever options we have
+        }
+
+        // if not enough distractors, pad with empty strings
+        while (options.size() < 4) options.push_back(std::string(""));
+
+        // shuffle options and assign to buttons
+        std::random_device rd;
+        std::mt19937 g(rd());
+        std::shuffle(options.begin(), options.end(), g);
+        
+        correctChoiceIndex = -1;
+        for (int i = 0; i < 4; ++i) {
+            choiceButtons[i]->setText(QString::fromStdString(options[i]));
+            choiceButtons[i]->setVisible(true);
+            choiceButtons[i]->setEnabled(true);
+            if (options[i] == correctText) correctChoiceIndex = i;
+        }
+    }
+}
+
+void MainWindow::applyRating(int quality) {
+    if (currentCardIndex >= studyCards.size()) return;
+    const auto &c = studyCards[currentCardIndex];
+
+    // In random practice mode, don't update review schedule
+    if (!isRandomPractice) {
+        // prepare calculator with current schedule
+        SpacedRepetitionCalculator calc;
+        calc.setEasinessFactor(c.ease_factor);
+        calc.setRepetitions(c.repetition_count);
+        calc.setInterval(c.interval_days);
+
+        calc.calculateNextReview(quality);
+
+        // build next_review datetime string in format YYYY-MM-DD HH:MM:SS
+        time_t nextT = calc.getNextReview();
+        struct tm tm;
+        gmtime_r(&nextT, &tm);
+        char buf[64];
+        strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", &tm);
+        std::string nextReviewStr(buf);
+
+        // update DB
+        bool was_correct = quality >= 3;
+        try {
+            db.updateReviewScheduleForWord(c.word_id, c.list_id, calc.getRepetitions(), calc.getInterval(), calc.getEasinessFactor(), nextReviewStr);
+            std::string modeStr = (studyMode == StudyMode::Flashcard) ? "flashcard" : "multiple_choice";
+            db.recordStudySession(c.word_id, c.list_id, was_correct, quality, modeStr);
+        } catch (const std::exception &ex) {
+            QMessageBox::critical(this, "DB Error", QString::fromStdString(ex.what()));
+        }
+    } else {
+        // In random practice mode, just record the session without updating schedule
+        bool was_correct = quality >= 3;
+        try {
+            std::string modeStr = (studyMode == StudyMode::Flashcard) ? "flashcard" : "multiple_choice";
+            db.recordStudySession(c.word_id, c.list_id, was_correct, quality, modeStr);
+        } catch (const std::exception &ex) {
+            QMessageBox::critical(this, "DB Error", QString::fromStdString(ex.what()));
+        }
+    }
+
+    // move to next
+    currentCardIndex++;
+    showCurrentCard();
+}
+
+void MainWindow::onReveal() {
+    ui->studyDefinitionLabel->setVisible(true);
+    ui->revealButton->setEnabled(false);
+}
+
+void MainWindow::onRateAgain() { applyRating(0); }
+void MainWindow::onRateHard() { applyRating(3); }
+void MainWindow::onRateGood() { applyRating(4); }
+void MainWindow::onRateEasy() { applyRating(5); }
+
+void MainWindow::onStudyModeChanged(int index) {
+    studyMode = (index == 1) ? StudyMode::MultipleChoice : StudyMode::Flashcard;
+    // refresh current card UI
+    if (currentCardIndex < studyCards.size()) {
+        showCurrentCard();
+    }
+}
+
+void MainWindow::onChoiceSelected() {
+    QObject* s = sender();
+    int chosen = -1;
+    for (int i = 0; i < 4; ++i) {
+        if (s == choiceButtons[i]) { chosen = i; break; }
+    }
+    if (chosen < 0) return;
+
+    // disable buttons to avoid double clicks
+    for (int i = 0; i < 4; ++i) choiceButtons[i]->setEnabled(false);
+
+    if (chosen == correctChoiceIndex) {
+        QMessageBox::information(this, "Correct", "Correct!");
+        // treat as easy
+        applyRating(5);
+    } else {
+        QMessageBox::information(this, "Incorrect", "Incorrect. The correct answer will be used to update scheduling.");
+        // treat as again
+        applyRating(0);
+    }
+}
+
+void MainWindow::showDeckList() {
+    ui->deckList->setVisible(true);
+    ui->modePanel->setVisible(false);
+    ui->studyPanel->setVisible(false);
+    pendingListID = -1;
+    pendingListName.clear();
+    updatingList();
+}
+
+void MainWindow::showModePanel() {
+    ui->deckList->setVisible(false);
+    ui->modePanel->setVisible(true);
+    ui->studyPanel->setVisible(false);
+}
+
+void MainWindow::showStudyPanel() {
+    ui->deckList->setVisible(false);
+    ui->modePanel->setVisible(false);
+    ui->studyPanel->setVisible(true);
+    showCurrentCard();
 }

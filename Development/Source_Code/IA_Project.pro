@@ -15,8 +15,7 @@ SOURCES += \
     mainwindow.cpp \
     spacedrepetitioncalculator.cpp \
     aicreatewindow.cpp \
-    sqlite3.c \
-    studywindow.cpp
+    sqlite3.c
 
 HEADERS += \
     addcardwindow.h \
@@ -25,14 +24,12 @@ HEADERS += \
     mainwindow.h \
     spacedrepetitioncalculator.h \
     aicreatewindow.h \
-    sqlite3.h \
-    studywindow.h
+    sqlite3.h
 
 FORMS += \
     addcardwindow.ui \
     addlistwindow.ui \
     mainwindow.ui \
-    studywindow.ui \
     aicreatewindow.ui
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
