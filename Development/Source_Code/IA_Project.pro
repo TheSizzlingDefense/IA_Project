@@ -1,4 +1,5 @@
 QT       += core gui
+QT       += network
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 CONFIG += c++17
@@ -13,6 +14,7 @@ SOURCES += \
     main.cpp \
     mainwindow.cpp \
     spacedrepetitioncalculator.cpp \
+    aicreatewindow.cpp \
     sqlite3.c \
     studywindow.cpp
 
@@ -22,6 +24,7 @@ HEADERS += \
     database.h \
     mainwindow.h \
     spacedrepetitioncalculator.h \
+    aicreatewindow.h \
     sqlite3.h \
     studywindow.h
 
@@ -29,7 +32,8 @@ FORMS += \
     addcardwindow.ui \
     addlistwindow.ui \
     mainwindow.ui \
-    studywindow.ui
+    studywindow.ui \
+    aicreatewindow.ui
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin

@@ -66,6 +66,18 @@
          </widget>
         </item>
         <item alignment="Qt::AlignmentFlag::AlignTop">
+         <widget class="QPushButton" name="aiCreate">
+          <property name="font">
+           <font>
+            <pointsize>12</pointsize>
+           </font>
+          </property>
+          <property name="text">
+           <string>AI Create</string>
+          </property>
+         </widget>
+        </item>
+        <item alignment="Qt::AlignmentFlag::AlignTop">
          <widget class="QPushButton" name="showStats">
           <property name="font">
            <font>

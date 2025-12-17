@@ -27,6 +27,7 @@ private slots:
     void on_addWord_clicked();
 
     void on_creatDeck_clicked();
+    void on_aiCreate_clicked();
 
     void updatingList();
     void startStudy();

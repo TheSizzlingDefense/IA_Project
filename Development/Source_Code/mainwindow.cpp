@@ -10,6 +10,7 @@
 #include <QPushButton>
 #include <QMessageBox>
 #include <sstream>
+#include "aicreatewindow.h"
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -141,6 +142,14 @@ void MainWindow::on_listDecks_clicked() {
     ui->deckList->setVisible(true);
     pendingListID = -1;
     pendingListName.clear();
+}
+
+void MainWindow::on_aiCreate_clicked() {
+    AICreateWindow dlg(this, &db);
+    dlg.setModal(true);
+    dlg.exec();
+    // after creation, refresh list view in case a new list was created
+    updatingList();
 }
 
 void MainWindow::on_showStats_clicked() {
