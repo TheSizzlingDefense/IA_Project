@@ -219,6 +219,13 @@
          </property>
         </widget>
          </item>
+         <item>
+        <widget class="QPushButton" name="deleteListButton">
+         <property name="text">
+          <string>Delete List</string>
+         </property>
+        </widget>
+         </item>
            <!-- backToDeckButton removed; top 'Decks' button will be used instead -->
         </layout>
        </item>

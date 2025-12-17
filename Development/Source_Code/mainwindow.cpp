@@ -203,3 +203,35 @@ void MainWindow::on_viewAllButton_clicked() {
     dlg.resize(520, 400);
     dlg.exec();
 }
+
+void MainWindow::on_deleteListButton_clicked() {
+    if (pendingListID < 0) {
+        QMessageBox::information(this, "No Deck Selected", "Please select a deck first (double-click a deck).");
+        return;
+    }
+
+    // Ask for confirmation before deleting
+    QMessageBox::StandardButton reply;
+    reply = QMessageBox::question(this, "Delete List", 
+                                   "Are you sure you want to delete \"" + pendingListName + "\"?\n\n"
+                                   "This will permanently delete the list and all associated data.",
+                                   QMessageBox::Yes | QMessageBox::No);
+    
+    if (reply == QMessageBox::Yes) {
+        try {
+            db.deleteList(pendingListID);
+            QMessageBox::information(this, "Success", "List \"" + pendingListName + "\" has been deleted.");
+            
+            // Reset pending state and go back to deck list view
+            pendingListID = -1;
+            pendingListName.clear();
+            ui->modePanel->setVisible(false);
+            ui->deckList->setVisible(true);
+            
+            // Refresh the list
+            updatingList();
+        } catch (const std::exception& e) {
+            QMessageBox::critical(this, "Error", "Failed to delete list: " + QString::fromStdString(e.what()));
+        }
+    }
+}

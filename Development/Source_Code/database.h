@@ -53,6 +53,8 @@ public:
 
     bool createNewList(std::string listName, std::string targetLanguage, std::string description);
 
+    bool deleteList(int listID);
+
     std::vector<std::string> getVocabLists();
     // Returns a vector of pairs (list_name, next_review_date_string or empty if none)
     std::vector<std::pair<std::string, std::string>> getVocabListsWithNextReview();

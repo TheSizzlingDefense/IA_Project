@@ -36,6 +36,7 @@ private slots:
     void on_listDecks_clicked();
     void on_showStats_clicked();
     void on_viewAllButton_clicked();
+    void on_deleteListButton_clicked();
 
 private:
     Ui::MainWindow *ui;

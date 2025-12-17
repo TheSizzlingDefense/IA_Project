@@ -407,6 +407,87 @@ bool DataBase::createNewList(std::string listName, std::string targetLanguage = 
     return true;
 }
 
+bool DataBase::deleteList(int listID) {
+    // Begin transaction
+    if (!beginTransaction()) {
+        throw std::runtime_error("Failed to begin transaction");
+    }
+
+    try {
+        // Delete from review_schedule (no CASCADE)
+        const char* delReviewSql = "DELETE FROM review_schedule WHERE list_id = ?;";
+        sqlite3_stmt* stmt;
+        int result = sqlite3_prepare_v2(db, delReviewSql, -1, &stmt, nullptr);
+        if (result != SQLITE_OK) {
+            rollbackTransaction();
+            throw std::runtime_error("Failed to prepare review_schedule delete: " + std::string(sqlite3_errmsg(db)));
+        }
+        sqlite3_bind_int(stmt, 1, listID);
+        result = sqlite3_step(stmt);
+        sqlite3_finalize(stmt);
+        if (result != SQLITE_DONE) {
+            rollbackTransaction();
+            throw std::runtime_error("Failed to delete from review_schedule: " + std::string(sqlite3_errmsg(db)));
+        }
+
+        // Delete from progress_list (no CASCADE)
+        const char* delProgressSql = "DELETE FROM progress_list WHERE list_id = ?;";
+        result = sqlite3_prepare_v2(db, delProgressSql, -1, &stmt, nullptr);
+        if (result != SQLITE_OK) {
+            rollbackTransaction();
+            throw std::runtime_error("Failed to prepare progress_list delete: " + std::string(sqlite3_errmsg(db)));
+        }
+        sqlite3_bind_int(stmt, 1, listID);
+        result = sqlite3_step(stmt);
+        sqlite3_finalize(stmt);
+        if (result != SQLITE_DONE) {
+            rollbackTransaction();
+            throw std::runtime_error("Failed to delete from progress_list: " + std::string(sqlite3_errmsg(db)));
+        }
+
+        // Delete from study_sessions (no CASCADE on list_id)
+        const char* delSessionsSql = "DELETE FROM study_sessions WHERE list_id = ?;";
+        result = sqlite3_prepare_v2(db, delSessionsSql, -1, &stmt, nullptr);
+        if (result != SQLITE_OK) {
+            rollbackTransaction();
+            throw std::runtime_error("Failed to prepare study_sessions delete: " + std::string(sqlite3_errmsg(db)));
+        }
+        sqlite3_bind_int(stmt, 1, listID);
+        result = sqlite3_step(stmt);
+        sqlite3_finalize(stmt);
+        if (result != SQLITE_DONE) {
+            rollbackTransaction();
+            throw std::runtime_error("Failed to delete from study_sessions: " + std::string(sqlite3_errmsg(db)));
+        }
+
+        // Finally, delete the list itself (list_words will CASCADE automatically)
+        const char* delListSql = "DELETE FROM vocabulary_lists WHERE list_id = ?;";
+        result = sqlite3_prepare_v2(db, delListSql, -1, &stmt, nullptr);
+        if (result != SQLITE_OK) {
+            rollbackTransaction();
+            throw std::runtime_error("Failed to prepare vocabulary_lists delete: " + std::string(sqlite3_errmsg(db)));
+        }
+        sqlite3_bind_int(stmt, 1, listID);
+        result = sqlite3_step(stmt);
+        sqlite3_finalize(stmt);
+        if (result != SQLITE_DONE) {
+            rollbackTransaction();
+            throw std::runtime_error("Failed to delete vocabulary list: " + std::string(sqlite3_errmsg(db)));
+        }
+
+        // Commit transaction
+        if (!commitTransaction()) {
+            rollbackTransaction();
+            throw std::runtime_error("Failed to commit transaction");
+        }
+
+        return true;
+    } catch (...) {
+        rollbackTransaction();
+        throw;
+    }
+}
+
 std::vector<std::string> DataBase::getVocabLists() {
     std::vector<std::string> allVocabLists;
     const char* sql = "SELECT DISTINCT list_name FROM vocabulary_lists ORDER BY list_name";
