@@ -187,3 +187,7 @@ void AICreateWindow::onNetworkReplyFinished(QNetworkReply* reply) {
         QMessageBox::critical(this, "DB Error", QString::fromStdString(ex.what()));
     }
 }
+
+void AICreateWindow::on_pushButton_clicked() {
+    reject();
+}

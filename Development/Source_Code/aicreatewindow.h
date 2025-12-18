@@ -20,6 +20,8 @@ private slots:
     void on_generateButton_clicked();
     void onNetworkReplyFinished(QNetworkReply* reply);
 
+    void on_pushButton_clicked();
+
 private:
     Ui::AICreateWindow *ui;
 
