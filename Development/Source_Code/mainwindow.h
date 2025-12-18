@@ -47,7 +47,6 @@ private slots:
     void onRateHard();
     void onRateGood();
     void onRateEasy();
-    void onStudyModeChanged(int index);
     void onChoiceSelected();
 
 private:

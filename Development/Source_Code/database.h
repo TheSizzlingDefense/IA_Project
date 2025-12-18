@@ -97,6 +97,25 @@ public:
 
     bool createNewRelation(int word1ID, int word2ID, std::string relationType = "");
 
+    // Structs for retrieving additional word information
+    struct WordExample {
+        int example_id;
+        std::string example_text;
+        std::string context_notes;
+    };
+
+    struct WordRelation {
+        int related_word_id;
+        std::string related_word;
+        std::string relation_type;
+    };
+
+    // Get all examples for a word
+    std::vector<WordExample> getWordExamples(int wordID);
+
+    // Get all word relations (returns related words and their relationship types)
+    std::vector<WordRelation> getWordRelations(int wordID);
+
 private:
     sqlite3* db;
 };

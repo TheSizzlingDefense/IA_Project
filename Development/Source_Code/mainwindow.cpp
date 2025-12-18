@@ -38,7 +38,6 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->hardButton, &QPushButton::clicked, this, &MainWindow::onRateHard);
     connect(ui->goodButton, &QPushButton::clicked, this, &MainWindow::onRateGood);
     connect(ui->easyButton, &QPushButton::clicked, this, &MainWindow::onRateEasy);
-    connect(ui->studyModeComboBox2, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &MainWindow::onStudyModeChanged);
     
     // Connect choice buttons
     for (int i = 0; i < 4; ++i) {
@@ -72,9 +71,9 @@ MainWindow::MainWindow(QWidget *parent)
 
     // connect double-click to show mode selection panel
     connect(ui->deckList, &QListWidget::itemDoubleClicked, this, &MainWindow::deckListDoubleClicked);
-    // connect mode panel buttons
-    connect(ui->startStudyButton, &QPushButton::clicked, this, &MainWindow::on_startStudyButton_clicked);
-    // don't manually connect the top 'Decks' button — use Qt auto-connect by naming the slot `on_listDecks_clicked`
+    // Mode panel buttons use Qt auto-connect (on_<objectName>_<signalName> pattern)
+    // Don't manually connect startStudyButton - it uses auto-connect via on_startStudyButton_clicked
+    // Don't manually connect the top 'Decks' button — use Qt auto-connect by naming the slot `on_listDecks_clicked`
 }
 
 MainWindow::~MainWindow() {
@@ -133,10 +132,12 @@ void MainWindow::startStudy() {
     
     currentStudyListID = listID;
     studyMode = StudyMode::Flashcard;
-    ui->studyModeComboBox2->setCurrentIndex(0);
     
     loadDueCards();
-    showStudyPanel();
+    // Only show study panel if we have cards to study (loadDueCards might have redirected to deck list)
+    if (!studyCards.empty()) {
+        showStudyPanel();
+    }
 }
 
 void MainWindow::deckListDoubleClicked(QListWidgetItem* item) {
@@ -159,10 +160,12 @@ void MainWindow::on_startStudyButton_clicked() {
     // Set mode based on combo box
     QString mode = ui->studyModeComboBox->currentText();
     studyMode = (mode == "Multiple Choice") ? StudyMode::MultipleChoice : StudyMode::Flashcard;
-    ui->studyModeComboBox2->setCurrentIndex(studyMode == StudyMode::MultipleChoice ? 1 : 0);
     
     loadDueCards();
-    showStudyPanel();
+    // Only show study panel if we have cards to study (loadDueCards might have redirected to deck list)
+    if (!studyCards.empty()) {
+        showStudyPanel();
+    }
 }
 
 void MainWindow::on_listDecks_clicked() {
@@ -269,6 +272,8 @@ void MainWindow::on_deleteListButton_clicked() {
 void MainWindow::loadDueCards() {
     studyCards = db.getDueCards(currentStudyListID);
     currentCardIndex = 0;
+    isRandomPractice = false;
+    recentlySeenWordIds.clear();
     
     // If no due cards, offer random practice mode
     if (studyCards.empty()) {
@@ -283,9 +288,6 @@ void MainWindow::loadDueCards() {
         } else {
             showDeckList();
         }
-    } else {
-        isRandomPractice = false;
-        recentlySeenWordIds.clear();
     }
 }
 
@@ -348,8 +350,9 @@ void MainWindow::showCurrentCard() {
                 showCurrentCard();
                 return;
             }
+        } else {
+            QMessageBox::information(this, "Study Complete", "No more cards in this session.");
         }
-        QMessageBox::information(this, "Study Complete", "No more cards in this session.");
         showDeckList();
         return;
     }
@@ -357,6 +360,37 @@ void MainWindow::showCurrentCard() {
     const auto &c = studyCards[currentCardIndex];
     ui->studyWordLabel->setText(QString::fromStdString(c.word));
     ui->studyDefinitionLabel->setText(QString::fromStdString(c.definition));
+    
+    // Fetch and display additional information (examples, notes, relations)
+    try {
+        // Get examples and notes
+        auto examples = db.getWordExamples(c.word_id);
+        QString examplesText;
+        for (const auto& ex : examples) {
+            if (!ex.example_text.empty()) {
+                examplesText += QString::fromStdString(ex.example_text);
+                if (!ex.context_notes.empty()) {
+                    examplesText += "\n[Note: " + QString::fromStdString(ex.context_notes) + "]";
+                }
+                examplesText += "\n\n";
+            }
+        }
+        ui->examplesText->setPlainText(examplesText.trimmed());
+        
+        // Get word relations
+        auto relations = db.getWordRelations(c.word_id);
+        QString relationsText;
+        for (const auto& rel : relations) {
+            relationsText += QString::fromStdString(rel.relation_type) + ": " + 
+                           QString::fromStdString(rel.related_word) + "\n";
+        }
+        ui->relationsText->setPlainText(relationsText.trimmed());
+        
+    } catch (const std::exception& ex) {
+        // If there's an error fetching additional info, just clear the fields
+        ui->examplesText->clear();
+        ui->relationsText->clear();
+    }
     
     // Add to recently seen list (keep last 5 words to avoid immediate repetition)
     recentlySeenWordIds.push_back(c.word_id);
@@ -366,18 +400,24 @@ void MainWindow::showCurrentCard() {
 
     if (studyMode == StudyMode::Flashcard) {
         ui->studyDefinitionLabel->setVisible(false);
+        ui->additionalInfoBox->setVisible(false);
         ui->revealButton->setVisible(true);
         ui->revealButton->setEnabled(true);
         // hide choice buttons
         for (int i = 0; i < 4; ++i) choiceButtons[i]->setVisible(false);
-        // show rating buttons in flashcard mode
+        // show rating buttons in flashcard mode but disable them until card is revealed
         ui->againButton->setVisible(true);
+        ui->againButton->setEnabled(false);
         ui->hardButton->setVisible(true);
+        ui->hardButton->setEnabled(false);
         ui->goodButton->setVisible(true);
+        ui->goodButton->setEnabled(false);
         ui->easyButton->setVisible(true);
+        ui->easyButton->setEnabled(false);
     } else {
         // Multiple choice mode
         ui->studyDefinitionLabel->setVisible(false);
+        ui->additionalInfoBox->setVisible(true);
         ui->revealButton->setVisible(false);
         // hide rating buttons in multiple choice mode
         ui->againButton->setVisible(false);
@@ -468,21 +508,19 @@ void MainWindow::applyRating(int quality) {
 
 void MainWindow::onReveal() {
     ui->studyDefinitionLabel->setVisible(true);
+    ui->additionalInfoBox->setVisible(true);
     ui->revealButton->setEnabled(false);
+    // Enable rating buttons after revealing the card
+    ui->againButton->setEnabled(true);
+    ui->hardButton->setEnabled(true);
+    ui->goodButton->setEnabled(true);
+    ui->easyButton->setEnabled(true);
 }
 
 void MainWindow::onRateAgain() { applyRating(0); }
 void MainWindow::onRateHard() { applyRating(3); }
 void MainWindow::onRateGood() { applyRating(4); }
 void MainWindow::onRateEasy() { applyRating(5); }
-
-void MainWindow::onStudyModeChanged(int index) {
-    studyMode = (index == 1) ? StudyMode::MultipleChoice : StudyMode::Flashcard;
-    // refresh current card UI
-    if (currentCardIndex < studyCards.size()) {
-        showCurrentCard();
-    }
-}
 
 void MainWindow::onChoiceSelected() {
     QObject* s = sender();
@@ -525,5 +563,9 @@ void MainWindow::showStudyPanel() {
     ui->deckList->setVisible(false);
     ui->modePanel->setVisible(false);
     ui->studyPanel->setVisible(true);
-    showCurrentCard();
+    // Don't call showCurrentCard here - it's called by loadDueCards or loadRandomPracticeCards
+    // Calling it here causes the card to be displayed before the panel is fully set up
+    if (currentCardIndex < studyCards.size()) {
+        showCurrentCard();
+    }
 }

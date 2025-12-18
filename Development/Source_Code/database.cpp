@@ -599,6 +599,68 @@ bool DataBase::createNewRelation(int word1ID, int word2ID, std::string relationT
     return true;
 }
 
+std::vector<DataBase::WordExample> DataBase::getWordExamples(int wordID) {
+    const char* sql = "SELECT example_id, example_text, context_notes FROM word_examples WHERE word_id = ?;";
+    
+    sqlite3_stmt* stmt;
+    int result = sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr);
+    if (result != SQLITE_OK) {
+        throw std::runtime_error("Failed to prepare statement: " + std::string(sqlite3_errmsg(db)));
+    }
+    
+    sqlite3_bind_int(stmt, 1, wordID);
+    
+    std::vector<WordExample> examples;
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        WordExample ex;
+        ex.example_id = sqlite3_column_int(stmt, 0);
+        
+        const unsigned char* example_text = sqlite3_column_text(stmt, 1);
+        ex.example_text = example_text ? std::string(reinterpret_cast<const char*>(example_text)) : "";
+        
+        const unsigned char* context_notes = sqlite3_column_text(stmt, 2);
+        ex.context_notes = context_notes ? std::string(reinterpret_cast<const char*>(context_notes)) : "";
+        
+        examples.push_back(ex);
+    }
+    
+    sqlite3_finalize(stmt);
+    return examples;
+}
+
+std::vector<DataBase::WordRelation> DataBase::getWordRelations(int wordID) {
+    const char* sql = 
+        "SELECT w.word_id, w.word, wr.relation_type "
+        "FROM word_relations wr "
+        "JOIN words w ON wr.word2_id = w.word_id "
+        "WHERE wr.word1_id = ?;";
+    
+    sqlite3_stmt* stmt;
+    int result = sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr);
+    if (result != SQLITE_OK) {
+        throw std::runtime_error("Failed to prepare statement: " + std::string(sqlite3_errmsg(db)));
+    }
+    
+    sqlite3_bind_int(stmt, 1, wordID);
+    
+    std::vector<WordRelation> relations;
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        WordRelation rel;
+        rel.related_word_id = sqlite3_column_int(stmt, 0);
+        
+        const unsigned char* word = sqlite3_column_text(stmt, 1);
+        rel.related_word = word ? std::string(reinterpret_cast<const char*>(word)) : "";
+        
+        const unsigned char* relation_type = sqlite3_column_text(stmt, 2);
+        rel.relation_type = relation_type ? std::string(reinterpret_cast<const char*>(relation_type)) : "";
+        
+        relations.push_back(rel);
+    }
+    
+    sqlite3_finalize(stmt);
+    return relations;
+}
+
 bool DataBase::beginTransaction() {
     char* err = nullptr;
     int rc = sqlite3_exec(db, "BEGIN TRANSACTION;", nullptr, nullptr, &err);
@@ -633,15 +695,24 @@ bool DataBase::rollbackTransaction() {
 }
 
 int DataBase::getWordId(const std::string& word, const std::string& language) {
-    const char* sql = "SELECT word_id FROM words WHERE word = ? AND language = ? LIMIT 1;";
+    std::string sql;
+    if (language.empty()) {
+        // If no language specified, find any word matching the text
+        sql = "SELECT word_id FROM words WHERE word = ? LIMIT 1;";
+    } else {
+        sql = "SELECT word_id FROM words WHERE word = ? AND language = ? LIMIT 1;";
+    }
+    
     sqlite3_stmt* stmt = nullptr;
-    int rc = sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr);
+    int rc = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (rc != SQLITE_OK) {
         throw std::runtime_error("Failed to prepare statement: " + std::string(sqlite3_errmsg(db)));
     }
 
     sqlite3_bind_text(stmt, 1, word.c_str(), -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 2, language.c_str(), -1, SQLITE_TRANSIENT);
+    if (!language.empty()) {
+        sqlite3_bind_text(stmt, 2, language.c_str(), -1, SQLITE_TRANSIENT);
+    }
 
     int wordID = -1;
     rc = sqlite3_step(stmt);

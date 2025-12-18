@@ -267,20 +267,6 @@
         </widget>
        </item>
        <item>
-        <widget class="QComboBox" name="studyModeComboBox2">
-         <item>
-          <property name="text">
-           <string>Flashcard</string>
-          </property>
-         </item>
-         <item>
-          <property name="text">
-           <string>Multiple Choice</string>
-          </property>
-         </item>
-        </widget>
-       </item>
-       <item>
         <widget class="QPushButton" name="revealButton">
          <property name="text">
           <string>Reveal</string>
@@ -292,12 +278,85 @@
          <property name="text">
           <string>Definition</string>
          </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
+         </property>
          <property name="wordWrap">
           <bool>true</bool>
+         </property>
+         <property name="styleSheet">
+          <string>font-size: 14pt; padding: 10px; background-color: #f0f0f0; border-radius: 5px;</string>
          </property>
          <property name="visible">
           <bool>false</bool>
          </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QGroupBox" name="additionalInfoBox">
+         <property name="title">
+          <string>Additional Information</string>
+         </property>
+         <layout class="QVBoxLayout" name="additionalInfoLayout">
+          <item>
+           <widget class="QLabel" name="examplesLabel">
+            <property name="text">
+             <string>Examples:</string>
+            </property>
+            <property name="font">
+             <font>
+              <weight>75</weight>
+              <bold>true</bold>
+             </font>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QTextEdit" name="examplesText">
+            <property name="readOnly">
+             <bool>true</bool>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>16777215</width>
+              <height>100</height>
+             </size>
+            </property>
+            <property name="placeholderText">
+             <string>No examples available</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="relationsLabel">
+            <property name="text">
+             <string>Word Relations:</string>
+            </property>
+            <property name="font">
+             <font>
+              <weight>75</weight>
+              <bold>true</bold>
+             </font>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QTextEdit" name="relationsText">
+            <property name="readOnly">
+             <bool>true</bool>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>16777215</width>
+              <height>80</height>
+             </size>
+            </property>
+            <property name="placeholderText">
+             <string>No word relations available</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
         </widget>
        </item>
        <item>

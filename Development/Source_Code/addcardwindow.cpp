@@ -57,12 +57,34 @@ void AddCardWindow::on_addButton_clicked() {
     try {
         int wordID = db->addWordAndSetup(listID, word, partOfSpeech, definition, "");
 
-        // If additional options checked, create example and/or notes
+        // If additional options checked, create example, notes, and/or relations
         if (ui->additionalOptionsBox->isChecked()) {
+            // Handle examples and notes
             QString exampleQ = ui->exampleInput->toPlainText();
             QString notesQ = ui->notesInput->toPlainText();
-            if (!exampleQ.trimmed().isEmpty()) {
+            
+            // Create example entry if either example or notes are provided
+            if (!exampleQ.trimmed().isEmpty() || !notesQ.trimmed().isEmpty()) {
                 db->createNewExample(wordID, exampleQ.toStdString(), notesQ.toStdString());
+            }
+
+            // Handle word relations (synonym, antonym, etc.)
+            QString relatedWordQ = ui->relatedWordInput->text();
+            QString relationTypeQ = ui->relationTypeDropdown->currentText();
+            
+            if (!relatedWordQ.trimmed().isEmpty() && relationTypeQ != "Select Option") {
+                // Try to find the related word in the database
+                std::string relatedWordStr = relatedWordQ.toStdString();
+                int relatedWordID = db->getWordId(relatedWordStr, ""); // Empty language means any language
+                
+                if (relatedWordID >= 0) {
+                    // Word exists, create the relation
+                    db->createNewRelation(wordID, relatedWordID, relationTypeQ.toStdString());
+                } else {
+                    // Word doesn't exist yet, show a warning but don't fail
+                    QMessageBox::warning(this, "Related Word Not Found", 
+                        QString("The related word '%1' was not found in the database. The word has been added without this relation.").arg(relatedWordQ));
+                }
             }
         }
 
