@@ -20,6 +20,202 @@ AddCardWindow::~AddCardWindow() {
     delete ui;
 }
 
+void AddCardWindow::applyTheme(bool isDark) {
+    if (isDark) {
+        // Dark theme
+        QString darkStyle = R"(
+            QDialog {
+                background-color: #1e1e1e;
+                color: #e0e0e0;
+            }
+            
+            QLabel {
+                color: #e0e0e0;
+            }
+            
+            QPushButton {
+                background-color: #2d2d30;
+                color: #e0e0e0;
+                border: 1px solid #3e3e42;
+                border-radius: 4px;
+                padding: 8px 16px;
+                min-height: 30px;
+            }
+            
+            QPushButton:hover {
+                background-color: #3e3e42;
+                border-color: #007acc;
+            }
+            
+            QPushButton:pressed {
+                background-color: #007acc;
+            }
+            
+            QLineEdit {
+                background-color: #252526;
+                color: #e0e0e0;
+                border: 1px solid #3e3e42;
+                border-radius: 4px;
+                padding: 6px;
+                min-height: 25px;
+            }
+            
+            QLineEdit:focus {
+                border-color: #007acc;
+            }
+            
+            QTextEdit {
+                background-color: #252526;
+                color: #e0e0e0;
+                border: 1px solid #3e3e42;
+                border-radius: 4px;
+                padding: 6px;
+            }
+            
+            QTextEdit:focus {
+                border-color: #007acc;
+            }
+            
+            QComboBox {
+                background-color: #2d2d30;
+                color: #e0e0e0;
+                border: 1px solid #3e3e42;
+                border-radius: 4px;
+                padding: 6px;
+                min-height: 25px;
+            }
+            
+            QComboBox:hover {
+                border-color: #007acc;
+            }
+            
+            QComboBox::drop-down {
+                border: none;
+            }
+            
+            QComboBox QAbstractItemView {
+                background-color: #252526;
+                color: #e0e0e0;
+                selection-background-color: #007acc;
+                selection-color: #ffffff;
+            }
+            
+            QGroupBox {
+                color: #e0e0e0;
+                border: 2px solid #3e3e42;
+                border-radius: 6px;
+                margin-top: 12px;
+                padding-top: 8px;
+                font-weight: bold;
+            }
+            
+            QGroupBox::title {
+                subcontrol-origin: margin;
+                subcontrol-position: top left;
+                padding: 0 8px;
+                background-color: #1e1e1e;
+            }
+        )";
+        this->setStyleSheet(darkStyle);
+    } else {
+        // Light theme
+        QString lightStyle = R"(
+            QDialog {
+                background-color: #ffffff;
+                color: #2c3e50;
+            }
+            
+            QLabel {
+                color: #2c3e50;
+            }
+            
+            QPushButton {
+                background-color: #ecf0f1;
+                color: #2c3e50;
+                border: 1px solid #bdc3c7;
+                border-radius: 4px;
+                padding: 8px 16px;
+                min-height: 30px;
+            }
+            
+            QPushButton:hover {
+                background-color: #d5dbdb;
+                border-color: #95a5a6;
+            }
+            
+            QPushButton:pressed {
+                background-color: #bdc3c7;
+            }
+            
+            QLineEdit {
+                background-color: #ffffff;
+                color: #2c3e50;
+                border: 1px solid #bdc3c7;
+                border-radius: 4px;
+                padding: 6px;
+                min-height: 25px;
+            }
+            
+            QLineEdit:focus {
+                border-color: #3498db;
+            }
+            
+            QTextEdit {
+                background-color: #ffffff;
+                color: #2c3e50;
+                border: 1px solid #bdc3c7;
+                border-radius: 4px;
+                padding: 6px;
+            }
+            
+            QTextEdit:focus {
+                border-color: #3498db;
+            }
+            
+            QComboBox {
+                background-color: #ffffff;
+                color: #2c3e50;
+                border: 1px solid #bdc3c7;
+                border-radius: 4px;
+                padding: 6px;
+                min-height: 25px;
+            }
+            
+            QComboBox:hover {
+                border-color: #95a5a6;
+            }
+            
+            QComboBox::drop-down {
+                border: none;
+            }
+            
+            QComboBox QAbstractItemView {
+                background-color: #ffffff;
+                color: #2c3e50;
+                selection-background-color: #3498db;
+                selection-color: #ffffff;
+            }
+            
+            QGroupBox {
+                color: #2c3e50;
+                border: 2px solid #bdc3c7;
+                border-radius: 6px;
+                margin-top: 12px;
+                padding-top: 8px;
+                font-weight: bold;
+            }
+            
+            QGroupBox::title {
+                subcontrol-origin: margin;
+                subcontrol-position: top left;
+                padding: 0 8px;
+                background-color: #ffffff;
+            }
+        )";
+        this->setStyleSheet(lightStyle);
+    }
+}
+
 void AddCardWindow::on_cancelAdding_clicked() {
     reject();
 }

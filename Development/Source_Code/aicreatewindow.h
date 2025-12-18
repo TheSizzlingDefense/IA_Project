@@ -16,6 +16,8 @@ public:
     explicit AICreateWindow(QWidget* parent = nullptr, DataBase* db = nullptr);
     ~AICreateWindow();
 
+    void applyTheme(bool isDark);
+
 private slots:
     void on_generateButton_clicked();
     void onNetworkReplyFinished(QNetworkReply* reply);

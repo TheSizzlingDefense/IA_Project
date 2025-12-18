@@ -31,6 +31,196 @@ AICreateWindow::~AICreateWindow() {
     delete ui;
 }
 
+void AICreateWindow::applyTheme(bool isDark) {
+    if (isDark) {
+        // Dark theme
+        setStyleSheet(R"(
+            QDialog {
+                background-color: #1e1e1e;
+                color: #e0e0e0;
+            }
+            QLabel {
+                color: #e0e0e0;
+                font-size: 10pt;
+            }
+            QLineEdit {
+                background-color: #2d2d2d;
+                color: #e0e0e0;
+                border: 1px solid #3f3f3f;
+                border-radius: 4px;
+                padding: 6px;
+                font-size: 10pt;
+            }
+            QLineEdit:focus {
+                border: 1px solid #007acc;
+            }
+            QTextEdit {
+                background-color: #2d2d2d;
+                color: #e0e0e0;
+                border: 1px solid #3f3f3f;
+                border-radius: 4px;
+                padding: 6px;
+                font-size: 10pt;
+            }
+            QTextEdit:focus {
+                border: 1px solid #007acc;
+            }
+            QComboBox {
+                background-color: #2d2d2d;
+                color: #e0e0e0;
+                border: 1px solid #3f3f3f;
+                border-radius: 4px;
+                padding: 6px;
+                font-size: 10pt;
+            }
+            QComboBox:focus {
+                border: 1px solid #007acc;
+            }
+            QComboBox::drop-down {
+                border: none;
+                width: 20px;
+            }
+            QComboBox::down-arrow {
+                image: none;
+                border-left: 4px solid transparent;
+                border-right: 4px solid transparent;
+                border-top: 6px solid #e0e0e0;
+                margin-right: 5px;
+            }
+            QComboBox QAbstractItemView {
+                background-color: #252526;
+                color: #e0e0e0;
+                selection-background-color: #007acc;
+                selection-color: #ffffff;
+                border: 1px solid #3f3f3f;
+            }
+            QSpinBox {
+                background-color: #2d2d2d;
+                color: #e0e0e0;
+                border: 1px solid #3f3f3f;
+                border-radius: 4px;
+                padding: 6px;
+                font-size: 10pt;
+            }
+            QSpinBox:focus {
+                border: 1px solid #007acc;
+            }
+            QPushButton {
+                background-color: #007acc;
+                color: white;
+                border: none;
+                border-radius: 4px;
+                padding: 8px 16px;
+                font-size: 10pt;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #005a9e;
+            }
+            QPushButton:pressed {
+                background-color: #004578;
+            }
+            QPushButton:disabled {
+                background-color: #3f3f3f;
+                color: #808080;
+            }
+        )");
+    } else {
+        // Light theme
+        setStyleSheet(R"(
+            QDialog {
+                background-color: #ffffff;
+                color: #2c3e50;
+            }
+            QLabel {
+                color: #2c3e50;
+                font-size: 10pt;
+            }
+            QLineEdit {
+                background-color: #ffffff;
+                color: #2c3e50;
+                border: 1px solid #bdc3c7;
+                border-radius: 4px;
+                padding: 6px;
+                font-size: 10pt;
+            }
+            QLineEdit:focus {
+                border: 1px solid #3498db;
+            }
+            QTextEdit {
+                background-color: #ffffff;
+                color: #2c3e50;
+                border: 1px solid #bdc3c7;
+                border-radius: 4px;
+                padding: 6px;
+                font-size: 10pt;
+            }
+            QTextEdit:focus {
+                border: 1px solid #3498db;
+            }
+            QComboBox {
+                background-color: #ffffff;
+                color: #2c3e50;
+                border: 1px solid #bdc3c7;
+                border-radius: 4px;
+                padding: 6px;
+                font-size: 10pt;
+            }
+            QComboBox:focus {
+                border: 1px solid #3498db;
+            }
+            QComboBox::drop-down {
+                border: none;
+                width: 20px;
+            }
+            QComboBox::down-arrow {
+                image: none;
+                border-left: 4px solid transparent;
+                border-right: 4px solid transparent;
+                border-top: 6px solid #2c3e50;
+                margin-right: 5px;
+            }
+            QComboBox QAbstractItemView {
+                background-color: #ffffff;
+                color: #2c3e50;
+                selection-background-color: #3498db;
+                selection-color: #ffffff;
+                border: 1px solid #bdc3c7;
+            }
+            QSpinBox {
+                background-color: #ffffff;
+                color: #2c3e50;
+                border: 1px solid #bdc3c7;
+                border-radius: 4px;
+                padding: 6px;
+                font-size: 10pt;
+            }
+            QSpinBox:focus {
+                border: 1px solid #3498db;
+            }
+            QPushButton {
+                background-color: #3498db;
+                color: white;
+                border: none;
+                border-radius: 4px;
+                padding: 8px 16px;
+                font-size: 10pt;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #2980b9;
+            }
+            QPushButton:pressed {
+                background-color: #1f618d;
+            }
+            QPushButton:disabled {
+                background-color: #bdc3c7;
+                color: #7f8c8d;
+            }
+        )");
+    }
+}
+
 static QString fetchApiKeyInteractive(QWidget* parent) {
     // Try environment variable first
     const char* env = std::getenv("OPENAI_API_KEY");

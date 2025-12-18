@@ -40,6 +40,7 @@ private slots:
     void on_showStats_clicked();
     void on_viewAllButton_clicked();
     void on_deleteListButton_clicked();
+    void on_actionToggleDarkMode_triggered(bool checked);
     
     // Study panel slots
     void onReveal();
@@ -57,6 +58,8 @@ private:
     void showDeckList();
     void showModePanel();
     void showStudyPanel();
+    void applyLightTheme();
+    void applyDarkTheme();
     
     Ui::MainWindow *ui;
 
@@ -74,5 +77,6 @@ private:
     int correctChoiceIndex = -1;
     bool isRandomPractice = false;
     std::vector<int> recentlySeenWordIds; // Track recently seen words to avoid repetition
+    bool isDarkMode = false;
 };
 #endif // MAINWINDOW_H

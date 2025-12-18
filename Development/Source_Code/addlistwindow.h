@@ -16,6 +16,8 @@ public:
     explicit AddListWindow(QWidget *parent = nullptr, DataBase* dataBase = nullptr);
     ~AddListWindow();
 
+    void applyTheme(bool isDark);
+
 signals:
     void newAddedList();
 

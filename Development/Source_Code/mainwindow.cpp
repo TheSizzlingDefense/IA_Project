@@ -82,6 +82,7 @@ MainWindow::~MainWindow() {
 
 void MainWindow::on_addWord_clicked() {
     AddCardWindow addCardWindow{nullptr, &db};
+    addCardWindow.applyTheme(isDarkMode);
     addCardWindow.setModal(true);
     addCardWindow.exec();
 }
@@ -89,6 +90,7 @@ void MainWindow::on_addWord_clicked() {
 void MainWindow::on_creatDeck_clicked() {
     AddListWindow addListWindow{nullptr, &db};
     QObject::connect(&addListWindow, &AddListWindow::newAddedList, this, &MainWindow::updatingList);
+    addListWindow.applyTheme(isDarkMode);
     addListWindow.setModal(true);
     addListWindow.exec();
 }
@@ -178,6 +180,7 @@ void MainWindow::on_listDecks_clicked() {
 
 void MainWindow::on_aiCreate_clicked() {
     AICreateWindow dlg(this, &db);
+    dlg.applyTheme(isDarkMode);
     dlg.setModal(true);
     dlg.exec();
     // after creation, refresh list view in case a new list was created
@@ -375,21 +378,20 @@ void MainWindow::showCurrentCard() {
                 examplesText += "\n\n";
             }
         }
-        ui->examplesText->setPlainText(examplesText.trimmed());
+        ui->examplesText->setText(examplesText.trimmed());
         
         // Get word relations
         auto relations = db.getWordRelations(c.word_id);
         QString relationsText;
         for (const auto& rel : relations) {
             relationsText += QString::fromStdString(rel.relation_type) + ": " + 
-                           QString::fromStdString(rel.related_word) + "\n";
+                             QString::fromStdString(rel.related_word) + "\n";
         }
-        ui->relationsText->setPlainText(relationsText.trimmed());
-        
+        ui->relationsText->setText(relationsText.trimmed());
     } catch (const std::exception& ex) {
         // If there's an error fetching additional info, just clear the fields
-        ui->examplesText->clear();
-        ui->relationsText->clear();
+        ui->examplesText->setText("No examples available");
+        ui->relationsText->setText("No word relations available");
     }
     
     // Add to recently seen list (keep last 5 words to avoid immediate repetition)
@@ -568,4 +570,299 @@ void MainWindow::showStudyPanel() {
     if (currentCardIndex < studyCards.size()) {
         showCurrentCard();
     }
+}
+
+void MainWindow::on_actionToggleDarkMode_triggered(bool checked) {
+    isDarkMode = checked;
+    if (isDarkMode) {
+        applyDarkTheme();
+    } else {
+        applyLightTheme();
+    }
+}
+
+void MainWindow::applyLightTheme() {
+    // Light theme - clean and minimal
+    QString lightStyle = R"(
+        QMainWindow {
+            background-color: #ffffff;
+        }
+        
+        QWidget {
+            background-color: #ffffff;
+            color: #2c3e50;
+        }
+        
+        QPushButton {
+            background-color: #ecf0f1;
+            color: #2c3e50;
+            border: 1px solid #bdc3c7;
+            border-radius: 4px;
+            padding: 8px 16px;
+        }
+        
+        QPushButton:hover {
+            background-color: #d5dbdb;
+            border-color: #95a5a6;
+        }
+        
+        QPushButton:pressed {
+            background-color: #bdc3c7;
+        }
+        
+        QPushButton:disabled {
+            background-color: #ecf0f1;
+            color: #95a5a6;
+        }
+        
+        QListWidget {
+            background-color: #ffffff;
+            color: #2c3e50;
+            border: 1px solid #bdc3c7;
+            border-radius: 4px;
+            selection-background-color: #3498db;
+            selection-color: #ffffff;
+        }
+        
+        QListWidget::item {
+            padding: 8px;
+        }
+        
+        QListWidget::item:selected {
+            background-color: #3498db;
+            color: #ffffff;
+        }
+        
+        QListWidget::item:hover {
+            background-color: #ecf0f1;
+        }
+        
+        QComboBox {
+            background-color: #ffffff;
+            color: #2c3e50;
+            border: 1px solid #bdc3c7;
+            border-radius: 4px;
+            padding: 6px;
+        }
+        
+        QComboBox:hover {
+            border-color: #95a5a6;
+        }
+        
+        QComboBox::drop-down {
+            border: none;
+        }
+        
+        QComboBox QAbstractItemView {
+            background-color: #ffffff;
+            color: #2c3e50;
+            selection-background-color: #3498db;
+            selection-color: #ffffff;
+        }
+        
+        QLabel {
+            color: #2c3e50;
+        }
+        
+        #studyDefinitionLabel {
+            background-color: #f0f0f0;
+            border: 1px solid #bdc3c7;
+        }
+        
+        QTextEdit {
+            background-color: #ffffff;
+            color: #2c3e50;
+            border: 1px solid #bdc3c7;
+            border-radius: 4px;
+            padding: 6px;
+        }
+        
+        QLineEdit {
+            background-color: #ffffff;
+            color: #2c3e50;
+            border: 1px solid #bdc3c7;
+            border-radius: 4px;
+            padding: 6px;
+        }
+        
+        QGroupBox {
+            color: #2c3e50;
+            border: 2px solid #bdc3c7;
+            border-radius: 6px;
+            margin-top: 12px;
+            padding-top: 8px;
+        }
+        
+        QGroupBox::title {
+            subcontrol-origin: margin;
+            subcontrol-position: top left;
+            padding: 0 8px;
+            background-color: #ffffff;
+        }
+        
+        QMenuBar {
+            background-color: #ecf0f1;
+            color: #2c3e50;
+        }
+        
+        QMenuBar::item:selected {
+            background-color: #d5dbdb;
+        }
+        
+        QMenu {
+            background-color: #ffffff;
+            color: #2c3e50;
+            border: 1px solid #bdc3c7;
+        }
+        
+        QMenu::item:selected {
+            background-color: #3498db;
+            color: #ffffff;
+        }
+    )";
+    
+    this->setStyleSheet(lightStyle);
+}
+
+void MainWindow::applyDarkTheme() {
+    // Dark theme - modern and easy on the eyes
+    QString darkStyle = R"(
+        QMainWindow {
+            background-color: #1e1e1e;
+        }
+        
+        QWidget {
+            background-color: #1e1e1e;
+            color: #e0e0e0;
+        }
+        
+        QPushButton {
+            background-color: #2d2d30;
+            color: #e0e0e0;
+            border: 1px solid #3e3e42;
+            border-radius: 4px;
+            padding: 8px 16px;
+        }
+        
+        QPushButton:hover {
+            background-color: #3e3e42;
+            border-color: #007acc;
+        }
+        
+        QPushButton:pressed {
+            background-color: #007acc;
+        }
+        
+        QPushButton:disabled {
+            background-color: #2d2d30;
+            color: #656565;
+        }
+        
+        QListWidget {
+            background-color: #252526;
+            color: #e0e0e0;
+            border: 1px solid #3e3e42;
+            border-radius: 4px;
+            selection-background-color: #007acc;
+            selection-color: #ffffff;
+        }
+        
+        QListWidget::item {
+            padding: 8px;
+        }
+        
+        QListWidget::item:selected {
+            background-color: #007acc;
+            color: #ffffff;
+        }
+        
+        QListWidget::item:hover {
+            background-color: #2d2d30;
+        }
+        
+        QComboBox {
+            background-color: #2d2d30;
+            color: #e0e0e0;
+            border: 1px solid #3e3e42;
+            border-radius: 4px;
+            padding: 6px;
+        }
+        
+        QComboBox:hover {
+            border-color: #007acc;
+        }
+        
+        QComboBox::drop-down {
+            border: none;
+        }
+        
+        QComboBox QAbstractItemView {
+            background-color: #252526;
+            color: #e0e0e0;
+            selection-background-color: #007acc;
+            selection-color: #ffffff;
+        }
+        
+        QLabel {
+            color: #e0e0e0;
+        }
+        
+        #studyDefinitionLabel {
+            background-color: #2d2d30;
+            border: 1px solid #3e3e42;
+        }
+        
+        QTextEdit {
+            background-color: #252526;
+            color: #e0e0e0;
+            border: 1px solid #3e3e42;
+            border-radius: 4px;
+            padding: 6px;
+        }
+        
+        QLineEdit {
+            background-color: #252526;
+            color: #e0e0e0;
+            border: 1px solid #3e3e42;
+            border-radius: 4px;
+            padding: 6px;
+        }
+        
+        QGroupBox {
+            color: #e0e0e0;
+            border: 2px solid #3e3e42;
+            border-radius: 6px;
+            margin-top: 12px;
+            padding-top: 8px;
+        }
+        
+        QGroupBox::title {
+            subcontrol-origin: margin;
+            subcontrol-position: top left;
+            padding: 0 8px;
+            background-color: #1e1e1e;
+        }
+        
+        QMenuBar {
+            background-color: #2d2d30;
+            color: #e0e0e0;
+        }
+        
+        QMenuBar::item:selected {
+            background-color: #3e3e42;
+        }
+        
+        QMenu {
+            background-color: #252526;
+            color: #e0e0e0;
+            border: 1px solid #3e3e42;
+        }
+        
+        QMenu::item:selected {
+            background-color: #007acc;
+            color: #ffffff;
+        }
+    )";
+    
+    this->setStyleSheet(darkStyle);
 }
