@@ -60,12 +60,17 @@ MainWindow::MainWindow(QWidget *parent)
 
     for (const auto &p : lists) {
         QString label = QString::fromStdString(p.first);
-        if (!p.second.empty()) {
-            label += "  — Next: ";
-            label += QString::fromStdString(p.second);
-        } else {
-            label += "  — Next: (no scheduled reviews)";
+        
+        // Get due card count for this list
+        int listID = db.getListId(p.first);
+        auto dueCards = db.getDueCards(listID);
+        int dueCount = dueCards.size();
+        
+        // Add due card count
+        if (dueCount > 0) {
+            label += QString(" (%1 due)").arg(dueCount);
         }
+        
         ui->deckList->addItem(label);
     }
 
@@ -113,12 +118,17 @@ void MainWindow::updatingList() {
 
     for (const auto &p : lists) {
         QString label = QString::fromStdString(p.first);
-        if (!p.second.empty()) {
-            label += "  — Next: ";
-            label += QString::fromStdString(p.second);
-        } else {
-            label += "  — Next: (no scheduled reviews)";
+        
+        // Get the list ID and count of due cards
+        int listID = db.getListId(p.first);
+        auto dueCards = db.getDueCards(listID);
+        int dueCount = dueCards.size();
+        
+        // Add due card count
+        if (dueCount > 0) {
+            label += QString(" (%1 due)").arg(dueCount);
         }
+        
         ui->deckList->addItem(label);
     }
 }
@@ -126,9 +136,9 @@ void MainWindow::updatingList() {
 void MainWindow::startStudy() {
     QListWidgetItem* item = ui->deckList->currentItem();
     if (!item) return;
-    // extract list name before the separator '  — Next:'
+    // extract list name (remove due count if present)
     QString text = item->text();
-    QStringList parts = text.split("  — Next:");
+    QStringList parts = text.split(" (");
     QString listName = parts.at(0).trimmed();
     int listID = db.getListId(listName.toStdString());
     
@@ -145,7 +155,7 @@ void MainWindow::startStudy() {
 void MainWindow::deckListDoubleClicked(QListWidgetItem* item) {
     if (!item) return;
     QString text = item->text();
-    QStringList parts = text.split("  — Next:");
+    QStringList parts = text.split(" (");
     pendingListName = parts.at(0).trimmed();
     pendingListID = db.getListId(pendingListName.toStdString());
 
