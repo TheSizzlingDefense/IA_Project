@@ -26,9 +26,9 @@ void AddListWindow::applyTheme(bool isDark) {
                 font-size: 10pt;
             }
             QLineEdit {
-                background-color: #2d2d2d;
+                background-color: #252526;
                 color: #e0e0e0;
-                border: 1px solid #3f3f3f;
+                border: 1px solid #3e3e42;
                 border-radius: 4px;
                 padding: 6px;
                 font-size: 10pt;
@@ -37,9 +37,9 @@ void AddListWindow::applyTheme(bool isDark) {
                 border: 1px solid #007acc;
             }
             QTextEdit {
-                background-color: #2d2d2d;
+                background-color: #252526;
                 color: #e0e0e0;
-                border: 1px solid #3f3f3f;
+                border: 1px solid #3e3e42;
                 border-radius: 4px;
                 padding: 6px;
                 font-size: 10pt;
@@ -48,19 +48,22 @@ void AddListWindow::applyTheme(bool isDark) {
                 border: 1px solid #007acc;
             }
             QPushButton {
-                background-color: #007acc;
-                color: white;
-                border: none;
+                background-color: #2d2d30;
+                color: #e0e0e0;
+                border: 1px solid #3e3e42;
                 border-radius: 4px;
                 padding: 8px 16px;
-                font-size: 10pt;
-                font-weight: bold;
             }
             QPushButton:hover {
-                background-color: #005a9e;
+                background-color: #3e3e42;
+                border-color: #007acc;
             }
             QPushButton:pressed {
-                background-color: #004578;
+                background-color: #007acc;
+            }
+            QPushButton:disabled {
+                background-color: #2d2d30;
+                color: #656565;
             }
         )");
     } else {
@@ -97,19 +100,22 @@ void AddListWindow::applyTheme(bool isDark) {
                 border: 1px solid #3498db;
             }
             QPushButton {
-                background-color: #3498db;
-                color: white;
-                border: none;
+                background-color: #ecf0f1;
+                color: #2c3e50;
+                border: 1px solid #bdc3c7;
                 border-radius: 4px;
                 padding: 8px 16px;
-                font-size: 10pt;
-                font-weight: bold;
             }
             QPushButton:hover {
-                background-color: #2980b9;
+                background-color: #d5dbdb;
+                border-color: #95a5a6;
             }
             QPushButton:pressed {
-                background-color: #1f618d;
+                background-color: #bdc3c7;
+            }
+            QPushButton:disabled {
+                background-color: #ecf0f1;
+                color: #95a5a6;
             }
         )");
     }

@@ -22,6 +22,8 @@ private slots:
 
     void on_addButton_clicked();
 
+    void on_toggleAdditionalOptionsButton_toggled(bool checked);
+
 private:
     Ui::AddCardWindow *ui;
 

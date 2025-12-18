@@ -11,17 +11,32 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Dialog</string>
+   <string>Create New List</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout_2">
+   <property name="leftMargin">
+    <number>20</number>
+   </property>
+   <property name="topMargin">
+    <number>20</number>
+   </property>
+   <property name="rightMargin">
+    <number>20</number>
+   </property>
+   <property name="bottomMargin">
+    <number>20</number>
+   </property>
+   <property name="spacing">
+    <number>12</number>
+   </property>
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout">
      <item>
       <widget class="QLabel" name="listLabel">
-       <property name="maximumSize">
+       <property name="minimumSize">
         <size>
          <width>130</width>
-         <height>16777215</height>
+         <height>0</height>
         </size>
        </property>
        <property name="font">
@@ -30,7 +45,7 @@
         </font>
        </property>
        <property name="text">
-        <string>List Name:              </string>
+        <string>List Name:</string>
        </property>
       </widget>
      </item>
@@ -49,10 +64,10 @@
     <layout class="QHBoxLayout" name="horizontalLayout_2">
      <item>
       <widget class="QLabel" name="languageLabel">
-       <property name="maximumSize">
+       <property name="minimumSize">
         <size>
          <width>130</width>
-         <height>16777215</height>
+         <height>0</height>
         </size>
        </property>
        <property name="font">
@@ -61,7 +76,7 @@
         </font>
        </property>
        <property name="text">
-        <string>Target Language:       </string>
+        <string>Target Language:</string>
        </property>
       </widget>
      </item>
@@ -133,6 +148,17 @@
      </item>
      <item>
       <widget class="QPushButton" name="createList">
+       <property name="minimumSize">
+        <size>
+         <width>100</width>
+         <height>40</height>
+        </size>
+       </property>
+       <property name="font">
+        <font>
+         <pointsize>11</pointsize>
+        </font>
+       </property>
        <property name="text">
         <string>Create List</string>
        </property>
@@ -140,6 +166,17 @@
      </item>
      <item>
       <widget class="QPushButton" name="cancelCreation">
+       <property name="minimumSize">
+        <size>
+         <width>100</width>
+         <height>40</height>
+        </size>
+       </property>
+       <property name="font">
+        <font>
+         <pointsize>11</pointsize>
+        </font>
+       </property>
        <property name="text">
         <string>Cancel</string>
        </property>

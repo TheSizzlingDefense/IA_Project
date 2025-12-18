@@ -14,10 +14,23 @@ AddCardWindow::AddCardWindow(QWidget *parent, DataBase* dataBase)
     for (size_t i = 0; i < allVocabLists.size(); i++) {
         ui->vocabListDropdown->addItem(QString::fromStdString(allVocabLists.at(i)));
     }
+    
+    // Hide additional options initially
+    ui->additionalOptionsBox->setVisible(false);
 }
 
 AddCardWindow::~AddCardWindow() {
     delete ui;
+}
+
+void AddCardWindow::on_toggleAdditionalOptionsButton_toggled(bool checked) {
+    if (checked) {
+        ui->toggleAdditionalOptionsButton->setText("▼ Additional Options");
+        ui->additionalOptionsBox->setVisible(true);
+    } else {
+        ui->toggleAdditionalOptionsButton->setText("▶ Additional Options");
+        ui->additionalOptionsBox->setVisible(false);
+    }
 }
 
 void AddCardWindow::applyTheme(bool isDark) {
@@ -39,7 +52,6 @@ void AddCardWindow::applyTheme(bool isDark) {
                 border: 1px solid #3e3e42;
                 border-radius: 4px;
                 padding: 8px 16px;
-                min-height: 30px;
             }
             
             QPushButton:hover {
@@ -51,13 +63,17 @@ void AddCardWindow::applyTheme(bool isDark) {
                 background-color: #007acc;
             }
             
+            QPushButton:disabled {
+                background-color: #2d2d30;
+                color: #656565;
+            }
+            
             QLineEdit {
                 background-color: #252526;
                 color: #e0e0e0;
                 border: 1px solid #3e3e42;
                 border-radius: 4px;
                 padding: 6px;
-                min-height: 25px;
             }
             
             QLineEdit:focus {
@@ -82,7 +98,6 @@ void AddCardWindow::applyTheme(bool isDark) {
                 border: 1px solid #3e3e42;
                 border-radius: 4px;
                 padding: 6px;
-                min-height: 25px;
             }
             
             QComboBox:hover {
@@ -135,7 +150,6 @@ void AddCardWindow::applyTheme(bool isDark) {
                 border: 1px solid #bdc3c7;
                 border-radius: 4px;
                 padding: 8px 16px;
-                min-height: 30px;
             }
             
             QPushButton:hover {
@@ -147,13 +161,17 @@ void AddCardWindow::applyTheme(bool isDark) {
                 background-color: #bdc3c7;
             }
             
+            QPushButton:disabled {
+                background-color: #ecf0f1;
+                color: #95a5a6;
+            }
+            
             QLineEdit {
                 background-color: #ffffff;
                 color: #2c3e50;
                 border: 1px solid #bdc3c7;
                 border-radius: 4px;
                 padding: 6px;
-                min-height: 25px;
             }
             
             QLineEdit:focus {
@@ -178,7 +196,6 @@ void AddCardWindow::applyTheme(bool isDark) {
                 border: 1px solid #bdc3c7;
                 border-radius: 4px;
                 padding: 6px;
-                min-height: 25px;
             }
             
             QComboBox:hover {
