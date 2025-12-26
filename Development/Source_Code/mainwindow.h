@@ -3,8 +3,8 @@
 
 #include <QMainWindow>
 #include "database.h"
-#include <QListWidget>
-#include <QListWidgetItem>
+#include <QTableWidget>
+#include <QTableWidgetItem>
 #include <QString>
 #include <QPushButton>
 #include <vector>
@@ -34,7 +34,7 @@ private slots:
 
     void updatingList();
     void startStudy();
-    void deckListDoubleClicked(QListWidgetItem* item);
+    void deckListDoubleClicked(QTableWidgetItem* item);
     void on_startStudyButton_clicked();
     void on_listDecks_clicked();
     void on_showStats_clicked();
@@ -49,6 +49,7 @@ private slots:
     void onRateGood();
     void onRateEasy();
     void onChoiceSelected();
+    void onSubmitTypedAnswer();
 
 private:
     void loadDueCards();
@@ -72,11 +73,13 @@ private:
     int currentStudyListID = -1;
     std::vector<DataBase::DueCard> studyCards;
     size_t currentCardIndex = 0;
-    enum class StudyMode { Flashcard, MultipleChoice } studyMode;
+    enum class StudyMode { Flashcard, MultipleChoice, Typing } studyMode;
     QPushButton* choiceButtons[4];
     int correctChoiceIndex = -1;
     bool isRandomPractice = false;
     std::vector<int> recentlySeenWordIds; // Track recently seen words to avoid repetition
     bool isDarkMode = false;
+    int typingAttempts = 0; // Track attempts in typing mode
+    bool showingExample = false; // Whether example is currently shown in typing mode
 };
 #endif // MAINWINDOW_H

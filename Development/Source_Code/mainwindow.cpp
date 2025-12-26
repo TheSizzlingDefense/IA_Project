@@ -9,6 +9,7 @@
 #include <QTextEdit>
 #include <QPushButton>
 #include <QMessageBox>
+#include <QHeaderView>
 #include <sstream>
 #include <random>
 #include <ctime>
@@ -19,9 +20,43 @@ MainWindow::MainWindow(QWidget *parent)
     , db("/home/brometheus/IA_Project/data/example.db")
 {
     ui->setupUi(this);
+    
+    // Configure table widget
+    ui->deckList->setColumnCount(4);
+    ui->deckList->setHorizontalHeaderLabels({"Deck Name", "New", "Due", "Review"});
+    ui->deckList->horizontalHeader()->setStretchLastSection(false);
+    ui->deckList->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Stretch);
+    ui->deckList->horizontalHeader()->setSectionResizeMode(1, QHeaderView::ResizeToContents);
+    ui->deckList->horizontalHeader()->setSectionResizeMode(2, QHeaderView::ResizeToContents);
+    ui->deckList->horizontalHeader()->setSectionResizeMode(3, QHeaderView::ResizeToContents);
+    ui->deckList->verticalHeader()->setVisible(false);
+    ui->deckList->setSelectionBehavior(QAbstractItemView::SelectRows);
+    ui->deckList->setSelectionMode(QAbstractItemView::SingleSelection);
+    ui->deckList->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    
+    // Remove borders and make the table look more fluid
+    ui->deckList->setShowGrid(false);
     ui->deckList->setStyleSheet(
-        "QListWidget::item:selected { color: black; }"
-        );
+        "QTableWidget { "
+        "   border: none; "
+        "   background-color: transparent; "
+        "} "
+        "QTableWidget::item { "
+        "   border: none; "
+        "   padding: 8px; "
+        "} "
+        "QTableWidget::item:selected { "
+        "   background-color: palette(highlight); "
+        "   color: palette(highlighted-text); "
+        "} "
+        "QHeaderView::section { "
+        "   background-color: transparent; "
+        "   border: none; "
+        "   border-bottom: 1px solid palette(mid); "
+        "   padding: 8px; "
+        "   font-weight: bold; "
+        "}"
+    );
     
     // Initialize study mode
     studyMode = StudyMode::Flashcard;
@@ -44,7 +79,11 @@ MainWindow::MainWindow(QWidget *parent)
         connect(choiceButtons[i], &QPushButton::clicked, this, &MainWindow::onChoiceSelected);
     }
     
-    ui->deckList->clear();
+    // Connect typing mode submit button
+    connect(ui->submitTypingButton, &QPushButton::clicked, this, &MainWindow::onSubmitTypedAnswer);
+    connect(ui->typingInput, &QLineEdit::returnPressed, this, &MainWindow::onSubmitTypedAnswer);
+    
+    ui->deckList->setRowCount(0);
     // Get lists with their next review date and sort by earliest review first
     auto lists = db.getVocabListsWithNextReview();
 
@@ -59,23 +98,30 @@ MainWindow::MainWindow(QWidget *parent)
     });
 
     for (const auto &p : lists) {
-        QString label = QString::fromStdString(p.first);
+        QString deckName = QString::fromStdString(p.first);
         
-        // Get due card count for this list
+        // Get card counts for this list
         int listID = db.getListId(p.first);
-        auto dueCards = db.getDueCards(listID);
-        int dueCount = dueCards.size();
+        int newCount = db.getNewCardCount(listID);
+        int continuingCount = db.getContinuingCardCount(listID);
+        int reviewCount = db.getReviewCardCount(listID);
         
-        // Add due card count
-        if (dueCount > 0) {
-            label += QString(" (%1 due)").arg(dueCount);
-        }
+        // Add row to table
+        int row = ui->deckList->rowCount();
+        ui->deckList->insertRow(row);
+        ui->deckList->setItem(row, 0, new QTableWidgetItem(deckName));
+        ui->deckList->setItem(row, 1, new QTableWidgetItem(QString::number(newCount)));
+        ui->deckList->setItem(row, 2, new QTableWidgetItem(QString::number(continuingCount)));
+        ui->deckList->setItem(row, 3, new QTableWidgetItem(QString::number(reviewCount)));
         
-        ui->deckList->addItem(label);
+        // Center align the numeric columns
+        ui->deckList->item(row, 1)->setTextAlignment(Qt::AlignCenter);
+        ui->deckList->item(row, 2)->setTextAlignment(Qt::AlignCenter);
+        ui->deckList->item(row, 3)->setTextAlignment(Qt::AlignCenter);
     }
 
     // connect double-click to show mode selection panel
-    connect(ui->deckList, &QListWidget::itemDoubleClicked, this, &MainWindow::deckListDoubleClicked);
+    connect(ui->deckList, &QTableWidget::itemDoubleClicked, this, &MainWindow::deckListDoubleClicked);
     // Mode panel buttons use Qt auto-connect (on_<objectName>_<signalName> pattern)
     // Don't manually connect startStudyButton - it uses auto-connect via on_startStudyButton_clicked
     // Don't manually connect the top 'Decks' button — use Qt auto-connect by naming the slot `on_listDecks_clicked`
@@ -105,7 +151,7 @@ DataBase* MainWindow::getDB() {
 }
 
 void MainWindow::updatingList() {
-    ui->deckList->clear();
+    ui->deckList->setRowCount(0);
     auto lists = db.getVocabListsWithNextReview();
     std::sort(lists.begin(), lists.end(), [](const auto &a, const auto &b) {
         const std::string &da = a.second;
@@ -117,29 +163,36 @@ void MainWindow::updatingList() {
     });
 
     for (const auto &p : lists) {
-        QString label = QString::fromStdString(p.first);
+        QString deckName = QString::fromStdString(p.first);
         
-        // Get the list ID and count of due cards
+        // Get card counts for this list
         int listID = db.getListId(p.first);
-        auto dueCards = db.getDueCards(listID);
-        int dueCount = dueCards.size();
+        int newCount = db.getNewCardCount(listID);
+        int continuingCount = db.getContinuingCardCount(listID);
+        int reviewCount = db.getReviewCardCount(listID);
         
-        // Add due card count
-        if (dueCount > 0) {
-            label += QString(" (%1 due)").arg(dueCount);
-        }
+        // Add row to table
+        int row = ui->deckList->rowCount();
+        ui->deckList->insertRow(row);
+        ui->deckList->setItem(row, 0, new QTableWidgetItem(deckName));
+        ui->deckList->setItem(row, 1, new QTableWidgetItem(QString::number(newCount)));
+        ui->deckList->setItem(row, 2, new QTableWidgetItem(QString::number(continuingCount)));
+        ui->deckList->setItem(row, 3, new QTableWidgetItem(QString::number(reviewCount)));
         
-        ui->deckList->addItem(label);
+        // Center align the numeric columns
+        ui->deckList->item(row, 1)->setTextAlignment(Qt::AlignCenter);
+        ui->deckList->item(row, 2)->setTextAlignment(Qt::AlignCenter);
+        ui->deckList->item(row, 3)->setTextAlignment(Qt::AlignCenter);
     }
 }
 
 void MainWindow::startStudy() {
-    QListWidgetItem* item = ui->deckList->currentItem();
+    int currentRow = ui->deckList->currentRow();
+    if (currentRow < 0) return;
+    // Get deck name from first column
+    QTableWidgetItem* item = ui->deckList->item(currentRow, 0);
     if (!item) return;
-    // extract list name (remove due count if present)
-    QString text = item->text();
-    QStringList parts = text.split(" (");
-    QString listName = parts.at(0).trimmed();
+    QString listName = item->text();
     int listID = db.getListId(listName.toStdString());
     
     currentStudyListID = listID;
@@ -152,11 +205,13 @@ void MainWindow::startStudy() {
     }
 }
 
-void MainWindow::deckListDoubleClicked(QListWidgetItem* item) {
+void MainWindow::deckListDoubleClicked(QTableWidgetItem* item) {
     if (!item) return;
-    QString text = item->text();
-    QStringList parts = text.split(" (");
-    pendingListName = parts.at(0).trimmed();
+    // Get the deck name from the first column of the clicked row
+    int row = item->row();
+    QTableWidgetItem* nameItem = ui->deckList->item(row, 0);
+    if (!nameItem) return;
+    pendingListName = nameItem->text();
     pendingListID = db.getListId(pendingListName.toStdString());
 
     // update mode panel label and show the panel
@@ -171,7 +226,13 @@ void MainWindow::on_startStudyButton_clicked() {
     
     // Set mode based on combo box
     QString mode = ui->studyModeComboBox->currentText();
-    studyMode = (mode == "Multiple Choice") ? StudyMode::MultipleChoice : StudyMode::Flashcard;
+    if (mode == "Multiple Choice") {
+        studyMode = StudyMode::MultipleChoice;
+    } else if (mode == "Typing") {
+        studyMode = StudyMode::Typing;
+    } else {
+        studyMode = StudyMode::Flashcard;
+    }
     
     loadDueCards();
     // Only show study panel if we have cards to study (loadDueCards might have redirected to deck list)
@@ -415,6 +476,7 @@ void MainWindow::showCurrentCard() {
         ui->additionalInfoBox->setVisible(false);
         ui->revealButton->setVisible(true);
         ui->revealButton->setEnabled(true);
+        ui->typingWidget->setVisible(false);
         // hide choice buttons
         for (int i = 0; i < 4; ++i) choiceButtons[i]->setVisible(false);
         // show rating buttons in flashcard mode but disable them until card is revealed
@@ -426,11 +488,12 @@ void MainWindow::showCurrentCard() {
         ui->goodButton->setEnabled(false);
         ui->easyButton->setVisible(true);
         ui->easyButton->setEnabled(false);
-    } else {
+    } else if (studyMode == StudyMode::MultipleChoice) {
         // Multiple choice mode
         ui->studyDefinitionLabel->setVisible(false);
         ui->additionalInfoBox->setVisible(true);
         ui->revealButton->setVisible(false);
+        ui->typingWidget->setVisible(false);
         // hide rating buttons in multiple choice mode
         ui->againButton->setVisible(false);
         ui->hardButton->setVisible(false);
@@ -468,6 +531,31 @@ void MainWindow::showCurrentCard() {
             choiceButtons[i]->setEnabled(true);
             if (options[i] == correctText) correctChoiceIndex = i;
         }
+    } else if (studyMode == StudyMode::Typing) {
+        // Typing mode
+        ui->studyDefinitionLabel->setVisible(false);
+        ui->revealButton->setVisible(false);
+        ui->typingWidget->setVisible(true);
+        ui->typingInput->clear();
+        ui->typingInput->setEnabled(true);
+        ui->submitTypingButton->setEnabled(true);
+        ui->typingFeedbackLabel->clear();
+        typingAttempts = 0;
+        showingExample = false;
+        
+        // Initially hide additional info (will show example on first wrong answer)
+        ui->additionalInfoBox->setVisible(false);
+        
+        // hide choice buttons
+        for (int i = 0; i < 4; ++i) choiceButtons[i]->setVisible(false);
+        // hide rating buttons
+        ui->againButton->setVisible(false);
+        ui->hardButton->setVisible(false);
+        ui->goodButton->setVisible(false);
+        ui->easyButton->setVisible(false);
+        
+        // Focus on the input field
+        ui->typingInput->setFocus();
     }
 }
 
@@ -553,6 +641,57 @@ void MainWindow::onChoiceSelected() {
         QMessageBox::information(this, "Incorrect", "Incorrect. The correct answer will be used to update scheduling.");
         // treat as again
         applyRating(0);
+    }
+}
+
+void MainWindow::onSubmitTypedAnswer() {
+    if (currentCardIndex >= studyCards.size()) return;
+    
+    const auto &c = studyCards[currentCardIndex];
+    QString typedAnswer = ui->typingInput->text().trimmed();
+    QString correctAnswer = QString::fromStdString(c.definition).trimmed();
+    
+    // Simple comparison - case insensitive
+    bool isCorrect = typedAnswer.toLower() == correctAnswer.toLower();
+    
+    if (isCorrect) {
+        // Correct answer
+        ui->typingFeedbackLabel->setText("✓ Correct!");
+        ui->typingFeedbackLabel->setStyleSheet("color: green;");
+        ui->typingInput->setEnabled(false);
+        ui->submitTypingButton->setEnabled(false);
+        
+        // Rate as good (quality 4)
+        applyRating(4);
+    } else {
+        typingAttempts++;
+        
+        if (typingAttempts == 1) {
+            // First wrong attempt - show example if available
+            ui->typingFeedbackLabel->setText("✗ Incorrect. Here's an example to help:");
+            ui->typingFeedbackLabel->setStyleSheet("color: orange;");
+            
+            // Show additional info with examples
+            ui->additionalInfoBox->setVisible(true);
+            showingExample = true;
+            
+            // Clear the input for second attempt
+            ui->typingInput->clear();
+            ui->typingInput->setFocus();
+        } else {
+            // Second wrong attempt - mark as wrong
+            ui->typingFeedbackLabel->setText("✗ Incorrect. The correct answer was: " + correctAnswer);
+            ui->typingFeedbackLabel->setStyleSheet("color: red;");
+            ui->typingInput->setEnabled(false);
+            ui->submitTypingButton->setEnabled(false);
+            
+            // Show the full definition
+            ui->studyDefinitionLabel->setText(correctAnswer);
+            ui->studyDefinitionLabel->setVisible(true);
+            
+            // Rate as again (quality 0)
+            applyRating(0);
+        }
     }
 }
 

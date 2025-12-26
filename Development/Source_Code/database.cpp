@@ -1078,3 +1078,72 @@ std::vector<std::tuple<int, std::string, std::string>> DataBase::getWordsInList(
     sqlite3_finalize(stmt);
     return out;
 }
+
+// Get count of new cards (never reviewed) for a list
+int DataBase::getNewCardCount(int listID) {
+    const char* sql = 
+        "SELECT COUNT(*) FROM review_schedule "
+        "WHERE list_id = ? AND repetition_count = 0;";
+    
+    sqlite3_stmt* stmt = nullptr;
+    int rc = sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr);
+    if (rc != SQLITE_OK) {
+        throw std::runtime_error("Failed to prepare statement: " + std::string(sqlite3_errmsg(db)));
+    }
+    
+    sqlite3_bind_int(stmt, 1, listID);
+    
+    int count = 0;
+    if (sqlite3_step(stmt) == SQLITE_ROW) {
+        count = sqlite3_column_int(stmt, 0);
+    }
+    
+    sqlite3_finalize(stmt);
+    return count;
+}
+
+// Get count of continuing cards (already started but due for review)
+int DataBase::getContinuingCardCount(int listID) {
+    const char* sql = 
+        "SELECT COUNT(*) FROM review_schedule "
+        "WHERE list_id = ? AND repetition_count > 0 AND next_review_date <= datetime('now');";
+    
+    sqlite3_stmt* stmt = nullptr;
+    int rc = sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr);
+    if (rc != SQLITE_OK) {
+        throw std::runtime_error("Failed to prepare statement: " + std::string(sqlite3_errmsg(db)));
+    }
+    
+    sqlite3_bind_int(stmt, 1, listID);
+    
+    int count = 0;
+    if (sqlite3_step(stmt) == SQLITE_ROW) {
+        count = sqlite3_column_int(stmt, 0);
+    }
+    
+    sqlite3_finalize(stmt);
+    return count;
+}
+
+// Get count of all cards due for review (new + continuing)
+int DataBase::getReviewCardCount(int listID) {
+    const char* sql = 
+        "SELECT COUNT(*) FROM review_schedule "
+        "WHERE list_id = ? AND next_review_date <= datetime('now');";
+    
+    sqlite3_stmt* stmt = nullptr;
+    int rc = sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr);
+    if (rc != SQLITE_OK) {
+        throw std::runtime_error("Failed to prepare statement: " + std::string(sqlite3_errmsg(db)));
+    }
+    
+    sqlite3_bind_int(stmt, 1, listID);
+    
+    int count = 0;
+    if (sqlite3_step(stmt) == SQLITE_ROW) {
+        count = sqlite3_column_int(stmt, 0);
+    }
+    
+    sqlite3_finalize(stmt);
+    return count;
+}

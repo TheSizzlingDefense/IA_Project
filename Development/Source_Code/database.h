@@ -116,6 +116,11 @@ public:
     // Get all word relations (returns related words and their relationship types)
     std::vector<WordRelation> getWordRelations(int wordID);
 
+    // Get card counts for a list
+    int getNewCardCount(int listID);           // Cards never reviewed (repetition_count = 0)
+    int getContinuingCardCount(int listID);     // Cards with repetition_count > 0 and due now
+    int getReviewCardCount(int listID);         // All cards due for review now
+
 private:
     sqlite3* db;
 };

@@ -1,6 +1,7 @@
 #include "addcardwindow.h"
 #include "ui_addcardwindow.h"
 #include <QMessageBox>
+#include <QRegularExpression>
 #include <stdexcept>
 
 AddCardWindow::AddCardWindow(QWidget *parent, DataBase* dataBase)
@@ -256,6 +257,32 @@ void AddCardWindow::on_addButton_clicked() {
 
     QString definitionQ = ui->definitionInput->toPlainText();
     std::string definition = definitionQ.toStdString();
+    
+    // Check if definition contains multiple words (more than one word for new cards)
+    QString trimmedDef = definitionQ.trimmed();
+    if (!trimmedDef.isEmpty()) {
+        QStringList words = trimmedDef.split(QRegularExpression("\\s+"), Qt::SkipEmptyParts);
+        if (words.size() > 5) {
+            QMessageBox::StandardButton reply;
+            reply = QMessageBox::question(this, "Long Definition",
+                "Definitions should be 5 words or less for optimal typing practice.\n\n"
+                "Would you like to use the 'Additional Options' to add the full definition in the Notes section instead?\n\n"
+                "Click 'Yes' to clear the definition and use notes.\n"
+                "Click 'No' to keep the current definition anyway.",
+                QMessageBox::Yes | QMessageBox::No);
+            
+            if (reply == QMessageBox::Yes) {
+                // Move the definition to notes and clear definition field
+                ui->definitionInput->clear();
+                ui->toggleAdditionalOptionsButton->setChecked(true);
+                ui->notesInput->setPlainText(trimmedDef);
+                QMessageBox::information(this, "Note",
+                    "Please enter a definition with 5 words or less in the Definition field.\n"
+                    "The full definition has been moved to the Notes section.");
+                return;
+            }
+        }
+    }
 
     QString posQ = ui->partOfSpeechList->currentText();
     std::string partOfSpeech = (posQ == "Select Option") ? std::string("") : posQ.toStdString();
