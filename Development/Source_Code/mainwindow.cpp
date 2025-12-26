@@ -10,6 +10,7 @@
 #include <QPushButton>
 #include <QMessageBox>
 #include <QHeaderView>
+#include <QDebug>
 #include <sstream>
 #include <random>
 #include <ctime>
@@ -279,6 +280,7 @@ void MainWindow::on_showStats_clicked() {
 
 void MainWindow::on_viewAllButton_clicked() {
     if (pendingListID < 0) {
+        qInfo() << "No deck selected when trying to view all words";
         QMessageBox::information(this, "No Deck Selected", "Please select a deck first (double-click a deck).");
         return;
     }
@@ -326,6 +328,7 @@ void MainWindow::on_deleteListButton_clicked() {
     if (reply == QMessageBox::Yes) {
         try {
             db.deleteList(pendingListID);
+            qInfo() << "Successfully deleted list:" << pendingListName;
             QMessageBox::information(this, "Success", "List \"" + pendingListName + "\" has been deleted.");
             
             // Reset pending state and go back to deck list view
@@ -337,6 +340,7 @@ void MainWindow::on_deleteListButton_clicked() {
             // Refresh the list
             updatingList();
         } catch (const std::exception& e) {
+            qCritical() << "Failed to delete list" << pendingListName << ":" << e.what();
             QMessageBox::critical(this, "Error", "Failed to delete list: " + QString::fromStdString(e.what()));
         }
     }
@@ -373,6 +377,7 @@ void MainWindow::loadRandomPracticeCards() {
     auto allWords = db.getWordsInList(currentStudyListID);
     
     if (allWords.empty()) {
+        qInfo() << "Deck has no words to practice";
         QMessageBox::information(this, "No Words", "This deck has no words to practice.");
         showDeckList();
         return;
@@ -425,6 +430,7 @@ void MainWindow::showCurrentCard() {
                 return;
             }
         } else {
+            qInfo() << "Study session complete - no more cards";
             QMessageBox::information(this, "Study Complete", "No more cards in this session.");
         }
         showDeckList();
@@ -588,6 +594,7 @@ void MainWindow::applyRating(int quality) {
             std::string modeStr = (studyMode == StudyMode::Flashcard) ? "flashcard" : "multiple_choice";
             db.recordStudySession(c.word_id, c.list_id, was_correct, quality, modeStr);
         } catch (const std::exception &ex) {
+            qCritical() << "Database error during review schedule update:" << ex.what();
             QMessageBox::critical(this, "DB Error", QString::fromStdString(ex.what()));
         }
     } else {
@@ -597,6 +604,7 @@ void MainWindow::applyRating(int quality) {
             std::string modeStr = (studyMode == StudyMode::Flashcard) ? "flashcard" : "multiple_choice";
             db.recordStudySession(c.word_id, c.list_id, was_correct, quality, modeStr);
         } catch (const std::exception &ex) {
+            qCritical() << "Database error during study session recording:" << ex.what();
             QMessageBox::critical(this, "DB Error", QString::fromStdString(ex.what()));
         }
     }

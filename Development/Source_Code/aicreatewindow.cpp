@@ -9,6 +9,7 @@
 #include <QMessageBox>
 #include <QUrl>
 #include <QByteArray>
+#include <QDebug>
 #include <cstdlib>
 
 AICreateWindow::AICreateWindow(QWidget* parent, DataBase* db_)
@@ -237,6 +238,7 @@ static QString fetchApiKeyInteractive(QWidget* parent) {
 void AICreateWindow::on_generateButton_clicked() {
     QString listName = ui->listNameEdit->text().trimmed();
     if (listName.isEmpty()) {
+        qWarning() << "Missing list name for AI vocabulary generation";
         QMessageBox::warning(this, "Missing List Name", "Please provide a name for the vocabulary list.");
         return;
     }
@@ -247,6 +249,7 @@ void AICreateWindow::on_generateButton_clicked() {
 
     QString apiKey = fetchApiKeyInteractive(this);
     if (apiKey.isEmpty()) {
+        qWarning() << "OpenAI API key not found";
         QMessageBox::warning(this, "No API Key", "OpenAI API key is required (set OPENAI_API_KEY or enter it when prompted).");
         return;
     }
@@ -298,6 +301,7 @@ void AICreateWindow::onNetworkReplyFinished(QNetworkReply* reply) {
     ui->statusLabel->clear();
 
     if (reply->error() != QNetworkReply::NoError) {
+        qCritical() << "Network error in AI vocabulary generation:" << reply->errorString();
         QMessageBox::critical(this, "Network Error", reply->errorString());
         return;
     }
@@ -305,6 +309,7 @@ void AICreateWindow::onNetworkReplyFinished(QNetworkReply* reply) {
     // parse the response JSON and attempt to extract model output
     QJsonDocument doc = QJsonDocument::fromJson(resp);
     if (doc.isNull() || !doc.isObject()) {
+        qCritical() << "Invalid JSON response from OpenAI API";
         QMessageBox::critical(this, "API Error", "Invalid JSON response from API");
         return;
     }
@@ -326,6 +331,7 @@ void AICreateWindow::onNetworkReplyFinished(QNetworkReply* reply) {
     }
 
     if (textContent.isEmpty()) {
+        qCritical() << "OpenAI API returned no content";
         QMessageBox::critical(this, "API Error", "API returned no content.");
         return;
     }
@@ -344,6 +350,7 @@ void AICreateWindow::onNetworkReplyFinished(QNetworkReply* reply) {
     }
 
     if (listDoc.isNull() || !listDoc.isArray()) {
+        qCritical() << "Could not parse OpenAI model output as JSON array. Response:" << textContent;
         QMessageBox::critical(this, "Parse Error", "Could not parse the model output as a JSON array.\nResponse:\n" + textContent);
         return;
     }
@@ -359,7 +366,10 @@ void AICreateWindow::onNetworkReplyFinished(QNetworkReply* reply) {
     try {
         bool ok = db->createNewList(listName.toStdString(), std::string(""), std::string("Created by AI"));
         int listID = db->getListId(listName.toStdString());
-        if (listID < 0) throw std::runtime_error("Failed to create or retrieve new list id.");
+        if (listID < 0) {
+            qCritical() << "Failed to create or retrieve new list id for AI-generated list:" << listName;
+            throw std::runtime_error("Failed to create or retrieve new list id.");
+        }
 
         int added = 0;
         for (const QJsonValue &v : arr) {
@@ -375,6 +385,7 @@ void AICreateWindow::onNetworkReplyFinished(QNetworkReply* reply) {
         QMessageBox::information(this, "Done", QString("Added %1 entries to list '%2'.").arg(added).arg(listName));
         accept();
     } catch (const std::exception &ex) {
+        qCritical() << "Database error during AI vocabulary list creation:" << ex.what();
         QMessageBox::critical(this, "DB Error", QString::fromStdString(ex.what()));
     }
 }

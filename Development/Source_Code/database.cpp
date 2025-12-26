@@ -3,12 +3,15 @@
 #include <vector>
 #include <sstream>
 #include <cmath>
+#include <QDebug>
 
 
 DataBase::DataBase(const std::string& dbPath) {
     int result = sqlite3_open(dbPath.c_str(), &db);    // Opening the sqlite3 DataBase
     if (result != SQLITE_OK) {
-        throw std::runtime_error("Can't open databse: " + std::string(sqlite3_errmsg(db)));
+        QString errorMsg = "Can't open database: " + QString::fromStdString(std::string(sqlite3_errmsg(db)));
+        qCritical() << errorMsg;
+        throw std::runtime_error(errorMsg.toStdString());
     }
 
     enableForeignKeys();
@@ -40,10 +43,10 @@ void DataBase::enableForeignKeys() {
 
     int result = sqlite3_exec(db, "PRAGMA foreign_keys = ON;", nullptr, nullptr, &errorMessage);
     if (result != SQLITE_OK) {
-        std::string error = "Failed to enable foreign keys";
-        error += errorMessage;
+        QString error = "Failed to enable foreign keys: " + QString::fromUtf8(errorMessage ? errorMessage : "");
+        qCritical() << error;
         sqlite3_free(errorMessage);
-        throw std::runtime_error(error);
+        throw std::runtime_error(error.toStdString());
     }
 }
 
@@ -60,10 +63,10 @@ bool DataBase::createVocabListTable() {
     char* errorMessage = nullptr;
     int result = sqlite3_exec(db, sql, nullptr, nullptr, &errorMessage);
     if (result != SQLITE_OK) {
-        std::string error = "Failed to create list table: ";
-        error += errorMessage;
+        QString error = "Failed to create list table: " + QString::fromUtf8(errorMessage ? errorMessage : "");
+        qCritical() << error;
         sqlite3_free(errorMessage);
-        throw std::runtime_error(error);
+        throw std::runtime_error(error.toStdString());
     }
 
     return true;
@@ -83,10 +86,10 @@ bool DataBase::createWordsTable() {
     char* errorMessage = nullptr;
     int result = sqlite3_exec(db, sql, nullptr, nullptr, &errorMessage);
     if (result != SQLITE_OK) {
-        std::string error = "Failed to create word table: ";
-        error += errorMessage;
+        QString error = "Failed to create word table: " + QString::fromUtf8(errorMessage ? errorMessage : "");
+        qCritical() << error;
         sqlite3_free(errorMessage);
-        throw std::runtime_error(error);
+        throw std::runtime_error(error.toStdString());
     }
 
     return true;
@@ -107,10 +110,10 @@ bool DataBase::createListWordTable() {
     char* errorMessage = nullptr;
     int result = sqlite3_exec(db, sql, nullptr, nullptr, &errorMessage);
     if (result != SQLITE_OK) {
-        std::string error = "Failed to create word table: ";
-        error += errorMessage;
+        QString error = "Failed to create list_words table: " + QString::fromUtf8(errorMessage ? errorMessage : "");
+        qCritical() << error;
         sqlite3_free(errorMessage);
-        throw std::runtime_error(error);
+        throw std::runtime_error(error.toStdString());
     }
 
     const char* indexSql =
@@ -119,10 +122,10 @@ bool DataBase::createListWordTable() {
 
     result = sqlite3_exec(db,indexSql, nullptr, nullptr, &errorMessage);
     if (result != SQLITE_OK) {
-        std::string error = "Failed to create index: ";
-        error += errorMessage;
+        QString error = "Failed to create index on list_words: " + QString::fromUtf8(errorMessage ? errorMessage : "");
+        qCritical() << error;
         sqlite3_free(errorMessage);
-        throw std::runtime_error(error);
+        throw std::runtime_error(error.toStdString());
     }
 
     return true;
@@ -147,10 +150,10 @@ bool DataBase::createStudySessionTable() {
     char* errorMessage = nullptr;
     int result = sqlite3_exec(db, sql, nullptr, nullptr, &errorMessage);
     if (result != SQLITE_OK) {
-        std::string error = "Failed to create word table: ";
-        error += errorMessage;
+        QString error = "Failed to create study_sessions table: " + QString::fromUtf8(errorMessage ? errorMessage : "");
+        qCritical() << error;
         sqlite3_free(errorMessage);
-        throw std::runtime_error(error);
+        throw std::runtime_error(error.toStdString());
     }
 
     return true;
@@ -173,10 +176,10 @@ bool DataBase::createReviewScheduleTable() {
     char* errorMessage = nullptr;
     int result = sqlite3_exec(db, sql, nullptr, nullptr, &errorMessage);
     if (result != SQLITE_OK) {
-        std::string error = "Failed to create word table: ";
-        error += errorMessage;
+        QString error = "Failed to create review_schedule table: " + QString::fromUtf8(errorMessage ? errorMessage : "");
+        qCritical() << error;
         sqlite3_free(errorMessage);
-        throw std::runtime_error(error);
+        throw std::runtime_error(error.toStdString());
     }
 
      const char* indexSql =
@@ -185,10 +188,10 @@ bool DataBase::createReviewScheduleTable() {
 
     result = sqlite3_exec(db,indexSql, nullptr, nullptr, &errorMessage);
     if (result != SQLITE_OK) {
-        std::string error = "Failed to create index: ";
-        error += errorMessage;
+        QString error = "Failed to create index on review_schedule: " + QString::fromUtf8(errorMessage ? errorMessage : "");
+        qCritical() << error;
         sqlite3_free(errorMessage);
-        throw std::runtime_error(error);
+        throw std::runtime_error(error.toStdString());
     }
 
     return true;
@@ -208,10 +211,10 @@ bool DataBase::createExampleTable() {
     char* errorMessage = nullptr;
     int result = sqlite3_exec(db, sql, nullptr, nullptr, &errorMessage);
     if (result != SQLITE_OK) {
-        std::string error = "Failed to create word table: ";
-        error += errorMessage;
+        QString error = "Failed to create word_examples table: " + QString::fromUtf8(errorMessage ? errorMessage : "");
+        qCritical() << error;
         sqlite3_free(errorMessage);
-        throw std::runtime_error(error);
+        throw std::runtime_error(error.toStdString());
     }
 
     const char* indexSql =
@@ -219,10 +222,10 @@ bool DataBase::createExampleTable() {
 
     result = sqlite3_exec(db,indexSql, nullptr, nullptr, &errorMessage);
     if (result != SQLITE_OK) {
-        std::string error = "Failed to create index: ";
-        error += errorMessage;
+        QString error = "Failed to create index on word_examples: " + QString::fromUtf8(errorMessage ? errorMessage : "");
+        qCritical() << error;
         sqlite3_free(errorMessage);
-        throw std::runtime_error(error);
+        throw std::runtime_error(error.toStdString());
     }
 
     return true;
@@ -325,10 +328,10 @@ bool DataBase::createListProgressTable() {
     char* errorMessage = nullptr;
     int result = sqlite3_exec(db, sql, nullptr, nullptr, &errorMessage);
     if (result != SQLITE_OK) {
-        std::string error = "Failed to create word table: ";
-        error += errorMessage;
+        QString error = "Failed to create progress_list table: " + QString::fromUtf8(errorMessage ? errorMessage : "");
+        qCritical() << error;
         sqlite3_free(errorMessage);
-        throw std::runtime_error(error);
+        throw std::runtime_error(error.toStdString());
     }
 
     const char* indexSql =
@@ -337,10 +340,10 @@ bool DataBase::createListProgressTable() {
 
     result = sqlite3_exec(db,indexSql, nullptr, nullptr, &errorMessage);
     if (result != SQLITE_OK) {
-        std::string error = "Failed to create index: ";
-        error += errorMessage;
+        QString error = "Failed to create index on progress_list: " + QString::fromUtf8(errorMessage ? errorMessage : "");
+        qCritical() << error;
         sqlite3_free(errorMessage);
-        throw std::runtime_error(error);
+        throw std::runtime_error(error.toStdString());
     }
 
     return true;
@@ -361,10 +364,10 @@ bool DataBase::createWordRelationTable() {
     char* errorMessage = nullptr;
     int result = sqlite3_exec(db, sql, nullptr, nullptr, &errorMessage);
     if (result != SQLITE_OK) {
-        std::string error = "Failed to create word table: ";
-        error += errorMessage;
+        QString error = "Failed to create word_relations table: " + QString::fromUtf8(errorMessage ? errorMessage : "");
+        qCritical() << error;
         sqlite3_free(errorMessage);
-        throw std::runtime_error(error);
+        throw std::runtime_error(error.toStdString());
     }
 
     const char* indexSql =
@@ -374,10 +377,10 @@ bool DataBase::createWordRelationTable() {
 
     result = sqlite3_exec(db,indexSql, nullptr, nullptr, &errorMessage);
     if (result != SQLITE_OK) {
-        std::string error = "Failed to create index: ";
-        error += errorMessage;
+        QString error = "Failed to create index on word_relations: " + QString::fromUtf8(errorMessage ? errorMessage : "");
+        qCritical() << error;
         sqlite3_free(errorMessage);
-        throw std::runtime_error(error);
+        throw std::runtime_error(error.toStdString());
     }
 
     return true;
@@ -389,7 +392,9 @@ bool DataBase::createNewList(std::string listName, std::string targetLanguage = 
     sqlite3_stmt* stmt;
     int result = sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
-        throw std::runtime_error("Failed to prepare statement: " + std::string(sqlite3_errmsg(db)));
+        QString errorMsg = "Failed to prepare statement for createNewList: " + QString::fromStdString(std::string(sqlite3_errmsg(db)));
+        qCritical() << errorMsg;
+        throw std::runtime_error(errorMsg.toStdString());
     }
 
     sqlite3_bind_text(stmt, 1, listName.c_str(), -1, SQLITE_TRANSIENT);
@@ -399,7 +404,9 @@ bool DataBase::createNewList(std::string listName, std::string targetLanguage = 
     result = sqlite3_step(stmt);
     if (result != SQLITE_DONE) {
         sqlite3_finalize(stmt);
-        throw std::runtime_error("Execution failed: " + std::string(sqlite3_errmsg(db)));
+        QString errorMsg = "Execution failed for createNewList: " + QString::fromStdString(std::string(sqlite3_errmsg(db)));
+        qCritical() << errorMsg;
+        throw std::runtime_error(errorMsg.toStdString());
     }
 
     sqlite3_finalize(stmt);
@@ -410,7 +417,9 @@ bool DataBase::createNewList(std::string listName, std::string targetLanguage = 
 bool DataBase::deleteList(int listID) {
     // Begin transaction
     if (!beginTransaction()) {
-        throw std::runtime_error("Failed to begin transaction");
+        QString errorMsg = "Failed to begin transaction for deleteList";
+        qCritical() << errorMsg;
+        throw std::runtime_error(errorMsg.toStdString());
     }
 
     try {
@@ -420,14 +429,18 @@ bool DataBase::deleteList(int listID) {
         int result = sqlite3_prepare_v2(db, delReviewSql, -1, &stmt, nullptr);
         if (result != SQLITE_OK) {
             rollbackTransaction();
-            throw std::runtime_error("Failed to prepare review_schedule delete: " + std::string(sqlite3_errmsg(db)));
+            QString errorMsg = "Failed to prepare review_schedule delete: " + QString::fromStdString(std::string(sqlite3_errmsg(db)));
+            qCritical() << errorMsg;
+            throw std::runtime_error(errorMsg.toStdString());
         }
         sqlite3_bind_int(stmt, 1, listID);
         result = sqlite3_step(stmt);
         sqlite3_finalize(stmt);
         if (result != SQLITE_DONE) {
             rollbackTransaction();
-            throw std::runtime_error("Failed to delete from review_schedule: " + std::string(sqlite3_errmsg(db)));
+            QString errorMsg = "Failed to delete from review_schedule: " + QString::fromStdString(std::string(sqlite3_errmsg(db)));
+            qCritical() << errorMsg;
+            throw std::runtime_error(errorMsg.toStdString());
         }
 
         // Delete from progress_list (no CASCADE)
@@ -435,14 +448,18 @@ bool DataBase::deleteList(int listID) {
         result = sqlite3_prepare_v2(db, delProgressSql, -1, &stmt, nullptr);
         if (result != SQLITE_OK) {
             rollbackTransaction();
-            throw std::runtime_error("Failed to prepare progress_list delete: " + std::string(sqlite3_errmsg(db)));
+            QString errorMsg = "Failed to prepare progress_list delete: " + QString::fromStdString(std::string(sqlite3_errmsg(db)));
+            qCritical() << errorMsg;
+            throw std::runtime_error(errorMsg.toStdString());
         }
         sqlite3_bind_int(stmt, 1, listID);
         result = sqlite3_step(stmt);
         sqlite3_finalize(stmt);
         if (result != SQLITE_DONE) {
             rollbackTransaction();
-            throw std::runtime_error("Failed to delete from progress_list: " + std::string(sqlite3_errmsg(db)));
+            QString errorMsg = "Failed to delete from progress_list: " + QString::fromStdString(std::string(sqlite3_errmsg(db)));
+            qCritical() << errorMsg;
+            throw std::runtime_error(errorMsg.toStdString());
         }
 
         // Delete from study_sessions (no CASCADE on list_id)
@@ -450,14 +467,18 @@ bool DataBase::deleteList(int listID) {
         result = sqlite3_prepare_v2(db, delSessionsSql, -1, &stmt, nullptr);
         if (result != SQLITE_OK) {
             rollbackTransaction();
-            throw std::runtime_error("Failed to prepare study_sessions delete: " + std::string(sqlite3_errmsg(db)));
+            QString errorMsg = "Failed to prepare study_sessions delete: " + QString::fromStdString(std::string(sqlite3_errmsg(db)));
+            qCritical() << errorMsg;
+            throw std::runtime_error(errorMsg.toStdString());
         }
         sqlite3_bind_int(stmt, 1, listID);
         result = sqlite3_step(stmt);
         sqlite3_finalize(stmt);
         if (result != SQLITE_DONE) {
             rollbackTransaction();
-            throw std::runtime_error("Failed to delete from study_sessions: " + std::string(sqlite3_errmsg(db)));
+            QString errorMsg = "Failed to delete from study_sessions: " + QString::fromStdString(std::string(sqlite3_errmsg(db)));
+            qCritical() << errorMsg;
+            throw std::runtime_error(errorMsg.toStdString());
         }
 
         // Finally, delete the list itself (list_words will CASCADE automatically)
@@ -465,20 +486,26 @@ bool DataBase::deleteList(int listID) {
         result = sqlite3_prepare_v2(db, delListSql, -1, &stmt, nullptr);
         if (result != SQLITE_OK) {
             rollbackTransaction();
-            throw std::runtime_error("Failed to prepare vocabulary_lists delete: " + std::string(sqlite3_errmsg(db)));
+            QString errorMsg = "Failed to prepare vocabulary_lists delete: " + QString::fromStdString(std::string(sqlite3_errmsg(db)));
+            qCritical() << errorMsg;
+            throw std::runtime_error(errorMsg.toStdString());
         }
         sqlite3_bind_int(stmt, 1, listID);
         result = sqlite3_step(stmt);
         sqlite3_finalize(stmt);
         if (result != SQLITE_DONE) {
             rollbackTransaction();
-            throw std::runtime_error("Failed to delete vocabulary list: " + std::string(sqlite3_errmsg(db)));
+            QString errorMsg = "Failed to delete vocabulary list: " + QString::fromStdString(std::string(sqlite3_errmsg(db)));
+            qCritical() << errorMsg;
+            throw std::runtime_error(errorMsg.toStdString());
         }
 
         // Commit transaction
         if (!commitTransaction()) {
             rollbackTransaction();
-            throw std::runtime_error("Failed to commit transaction");
+            QString errorMsg = "Failed to commit transaction for deleteList";
+            qCritical() << errorMsg;
+            throw std::runtime_error(errorMsg.toStdString());
         }
 
         return true;
@@ -495,7 +522,9 @@ std::vector<std::string> DataBase::getVocabLists() {
     sqlite3_stmt* stmt;
     int result = sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
-        throw std::runtime_error("Failed to prepare statement: " + std::string(sqlite3_errmsg(db)));
+        QString errorMsg = "Failed to prepare statement for getVocabLists: " + QString::fromStdString(std::string(sqlite3_errmsg(db)));
+        qCritical() << errorMsg;
+        throw std::runtime_error(errorMsg.toStdString());
     }
 
     while (sqlite3_step(stmt) == SQLITE_ROW) {
@@ -517,7 +546,9 @@ std::vector<std::pair<std::string, std::string>> DataBase::getVocabListsWithNext
     sqlite3_stmt* stmt = nullptr;
     int rc = sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr);
     if (rc != SQLITE_OK) {
-        throw std::runtime_error("Failed to prepare statement: " + std::string(sqlite3_errmsg(db)));
+        QString errorMsg = "Failed to prepare statement for getVocabListsWithNextReview: " + QString::fromStdString(std::string(sqlite3_errmsg(db)));
+        qCritical() << errorMsg;
+        throw std::runtime_error(errorMsg.toStdString());
     }
 
     while ((rc = sqlite3_step(stmt)) == SQLITE_ROW) {
@@ -531,7 +562,9 @@ std::vector<std::pair<std::string, std::string>> DataBase::getVocabListsWithNext
         int drc = sqlite3_prepare_v2(db, dateSql, -1, &dstmt, nullptr);
         if (drc != SQLITE_OK) {
             sqlite3_finalize(stmt);
-            throw std::runtime_error("Failed to prepare statement: " + std::string(sqlite3_errmsg(db)));
+            QString errorMsg = "Failed to prepare statement for review_schedule query: " + QString::fromStdString(std::string(sqlite3_errmsg(db)));
+            qCritical() << errorMsg;
+            throw std::runtime_error(errorMsg.toStdString());
         }
 
         sqlite3_bind_int(dstmt, 1, listID);
@@ -557,7 +590,9 @@ bool DataBase::createNewExample(int wordID, std::string exampleText, std::string
     sqlite3_stmt* stmt;
     int result = sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
-        throw std::runtime_error("Failed to prepare statement: " + std::string(sqlite3_errmsg(db)));
+        QString errorMsg = "Failed to prepare statement for createNewExample: " + QString::fromStdString(std::string(sqlite3_errmsg(db)));
+        qCritical() << errorMsg;
+        throw std::runtime_error(errorMsg.toStdString());
     }
 
     sqlite3_bind_int(stmt, 1, wordID);
@@ -567,7 +602,9 @@ bool DataBase::createNewExample(int wordID, std::string exampleText, std::string
     result = sqlite3_step(stmt);
     if (result != SQLITE_DONE) {
         sqlite3_finalize(stmt);
-        throw std::runtime_error("Execution failed: " + std::string(sqlite3_errmsg(db)));
+        QString errorMsg = "Execution failed for createNewExample: " + QString::fromStdString(std::string(sqlite3_errmsg(db)));
+        qCritical() << errorMsg;
+        throw std::runtime_error(errorMsg.toStdString());
         }
 
     sqlite3_finalize(stmt);
@@ -581,7 +618,9 @@ bool DataBase::createNewRelation(int word1ID, int word2ID, std::string relationT
     sqlite3_stmt* stmt;
     int result = sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
-        throw std::runtime_error("Failed to prepare statement: " + std::string(sqlite3_errmsg(db)));
+        QString errorMsg = "Failed to prepare statement for createNewRelation: " + QString::fromStdString(std::string(sqlite3_errmsg(db)));
+        qCritical() << errorMsg;
+        throw std::runtime_error(errorMsg.toStdString());
     }
 
     sqlite3_bind_int(stmt, 1, word1ID);
@@ -591,7 +630,9 @@ bool DataBase::createNewRelation(int word1ID, int word2ID, std::string relationT
     result = sqlite3_step(stmt);
     if (result != SQLITE_DONE) {
         sqlite3_finalize(stmt);
-        throw std::runtime_error("Execution failed: " + std::string(sqlite3_errmsg(db)));
+        QString errorMsg = "Execution failed for createNewRelation: " + QString::fromStdString(std::string(sqlite3_errmsg(db)));
+        qCritical() << errorMsg;
+        throw std::runtime_error(errorMsg.toStdString());
     }
 
     sqlite3_finalize(stmt);
@@ -605,7 +646,9 @@ std::vector<DataBase::WordExample> DataBase::getWordExamples(int wordID) {
     sqlite3_stmt* stmt;
     int result = sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
-        throw std::runtime_error("Failed to prepare statement: " + std::string(sqlite3_errmsg(db)));
+        QString errorMsg = "Failed to prepare statement for getWordExamples: " + QString::fromStdString(std::string(sqlite3_errmsg(db)));
+        qCritical() << errorMsg;
+        throw std::runtime_error(errorMsg.toStdString());
     }
     
     sqlite3_bind_int(stmt, 1, wordID);
@@ -638,7 +681,9 @@ std::vector<DataBase::WordRelation> DataBase::getWordRelations(int wordID) {
     sqlite3_stmt* stmt;
     int result = sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
-        throw std::runtime_error("Failed to prepare statement: " + std::string(sqlite3_errmsg(db)));
+        QString errorMsg = "Failed to prepare statement for getWordRelations: " + QString::fromStdString(std::string(sqlite3_errmsg(db)));
+        qCritical() << errorMsg;
+        throw std::runtime_error(errorMsg.toStdString());
     }
     
     sqlite3_bind_int(stmt, 1, wordID);
@@ -665,9 +710,10 @@ bool DataBase::beginTransaction() {
     char* err = nullptr;
     int rc = sqlite3_exec(db, "BEGIN TRANSACTION;", nullptr, nullptr, &err);
     if (rc != SQLITE_OK) {
-        std::string e = "Failed to begin transaction: ";
-        if (err) { e += err; sqlite3_free(err); }
-        throw std::runtime_error(e);
+        QString errorMsg = "Failed to begin transaction: " + QString::fromUtf8(err ? err : "");
+        qCritical() << errorMsg;
+        if (err) sqlite3_free(err);
+        throw std::runtime_error(errorMsg.toStdString());
     }
     return true;
 }
@@ -676,9 +722,10 @@ bool DataBase::commitTransaction() {
     char* err = nullptr;
     int rc = sqlite3_exec(db, "COMMIT;", nullptr, nullptr, &err);
     if (rc != SQLITE_OK) {
-        std::string e = "Failed to commit transaction: ";
-        if (err) { e += err; sqlite3_free(err); }
-        throw std::runtime_error(e);
+        QString errorMsg = "Failed to commit transaction: " + QString::fromUtf8(err ? err : "");
+        qCritical() << errorMsg;
+        if (err) sqlite3_free(err);
+        throw std::runtime_error(errorMsg.toStdString());
     }
     return true;
 }
@@ -687,9 +734,10 @@ bool DataBase::rollbackTransaction() {
     char* err = nullptr;
     int rc = sqlite3_exec(db, "ROLLBACK;", nullptr, nullptr, &err);
     if (rc != SQLITE_OK) {
-        std::string e = "Failed to rollback transaction: ";
-        if (err) { e += err; sqlite3_free(err); }
-        throw std::runtime_error(e);
+        QString errorMsg = "Failed to rollback transaction: " + QString::fromUtf8(err ? err : "");
+        qCritical() << errorMsg;
+        if (err) sqlite3_free(err);
+        throw std::runtime_error(errorMsg.toStdString());
     }
     return true;
 }
@@ -706,7 +754,9 @@ int DataBase::getWordId(const std::string& word, const std::string& language) {
     sqlite3_stmt* stmt = nullptr;
     int rc = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (rc != SQLITE_OK) {
-        throw std::runtime_error("Failed to prepare statement: " + std::string(sqlite3_errmsg(db)));
+        QString errorMsg = "Failed to prepare statement for getWordId: " + QString::fromStdString(std::string(sqlite3_errmsg(db)));
+        qCritical() << errorMsg;
+        throw std::runtime_error(errorMsg.toStdString());
     }
 
     sqlite3_bind_text(stmt, 1, word.c_str(), -1, SQLITE_TRANSIENT);
@@ -729,7 +779,9 @@ int DataBase::getListId(const std::string& listName) {
     sqlite3_stmt* stmt = nullptr;
     int rc = sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr);
     if (rc != SQLITE_OK) {
-        throw std::runtime_error("Failed to prepare statement: " + std::string(sqlite3_errmsg(db)));
+        QString errorMsg = "Failed to prepare statement for getListId: " + QString::fromStdString(std::string(sqlite3_errmsg(db)));
+        qCritical() << errorMsg;
+        throw std::runtime_error(errorMsg.toStdString());
     }
 
     sqlite3_bind_text(stmt, 1, listName.c_str(), -1, SQLITE_TRANSIENT);
@@ -752,7 +804,9 @@ int DataBase::addOrGetWord(const std::string& word, const std::string& partOfSpe
     sqlite3_stmt* stmt = nullptr;
     int rc = sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr);
     if (rc != SQLITE_OK) {
-        throw std::runtime_error("Failed to prepare statement: " + std::string(sqlite3_errmsg(db)));
+        QString errorMsg = "Failed to prepare statement for addOrGetWord: " + QString::fromStdString(std::string(sqlite3_errmsg(db)));
+        qCritical() << errorMsg;
+        throw std::runtime_error(errorMsg.toStdString());
     }
 
     sqlite3_bind_text(stmt, 1, word.c_str(), -1, SQLITE_TRANSIENT);
@@ -763,7 +817,9 @@ int DataBase::addOrGetWord(const std::string& word, const std::string& partOfSpe
     rc = sqlite3_step(stmt);
     if (rc != SQLITE_DONE) {
         sqlite3_finalize(stmt);
-        throw std::runtime_error("Execution failed: " + std::string(sqlite3_errmsg(db)));
+        QString errorMsg = "Execution failed for addOrGetWord: " + QString::fromStdString(std::string(sqlite3_errmsg(db)));
+        qCritical() << errorMsg;
+        throw std::runtime_error(errorMsg.toStdString());
     }
 
     sqlite3_finalize(stmt);
@@ -776,7 +832,9 @@ bool DataBase::addWordToList(int listID, int wordID) {
     sqlite3_stmt* stmt = nullptr;
     int rc = sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr);
     if (rc != SQLITE_OK) {
-        throw std::runtime_error("Failed to prepare statement: " + std::string(sqlite3_errmsg(db)));
+        QString errorMsg = "Failed to prepare statement for addWordToList: " + QString::fromStdString(std::string(sqlite3_errmsg(db)));
+        qCritical() << errorMsg;
+        throw std::runtime_error(errorMsg.toStdString());
     }
 
     sqlite3_bind_int(stmt, 1, listID);
@@ -785,7 +843,9 @@ bool DataBase::addWordToList(int listID, int wordID) {
     rc = sqlite3_step(stmt);
     if (rc != SQLITE_DONE) {
         sqlite3_finalize(stmt);
-        throw std::runtime_error("Execution failed: " + std::string(sqlite3_errmsg(db)));
+        QString errorMsg = "Execution failed for addWordToList: " + QString::fromStdString(std::string(sqlite3_errmsg(db)));
+        qCritical() << errorMsg;
+        throw std::runtime_error(errorMsg.toStdString());
     }
 
     sqlite3_finalize(stmt);
@@ -800,7 +860,9 @@ bool DataBase::initReviewSchedule(int wordID, int listID) {
     sqlite3_stmt* stmt = nullptr;
     int rc = sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr);
     if (rc != SQLITE_OK) {
-        throw std::runtime_error("Failed to prepare statement: " + std::string(sqlite3_errmsg(db)));
+        QString errorMsg = "Failed to prepare statement for initReviewSchedule: " + QString::fromStdString(std::string(sqlite3_errmsg(db)));
+        qCritical() << errorMsg;
+        throw std::runtime_error(errorMsg.toStdString());
     }
 
     sqlite3_bind_int(stmt, 1, wordID);
@@ -809,7 +871,9 @@ bool DataBase::initReviewSchedule(int wordID, int listID) {
     rc = sqlite3_step(stmt);
     if (rc != SQLITE_DONE) {
         sqlite3_finalize(stmt);
-        throw std::runtime_error("Execution failed: " + std::string(sqlite3_errmsg(db)));
+        QString errorMsg = "Execution failed for initReviewSchedule: " + QString::fromStdString(std::string(sqlite3_errmsg(db)));
+        qCritical() << errorMsg;
+        throw std::runtime_error(errorMsg.toStdString());
     }
 
     sqlite3_finalize(stmt);
@@ -821,7 +885,9 @@ bool DataBase::incrementListProgress(int listID, int delta) {
     sqlite3_stmt* stmt = nullptr;
     int rc = sqlite3_prepare_v2(db, updateSql, -1, &stmt, nullptr);
     if (rc != SQLITE_OK) {
-        throw std::runtime_error("Failed to prepare statement: " + std::string(sqlite3_errmsg(db)));
+        QString errorMsg = "Failed to prepare statement for incrementListProgress UPDATE: " + QString::fromStdString(std::string(sqlite3_errmsg(db)));
+        qCritical() << errorMsg;
+        throw std::runtime_error(errorMsg.toStdString());
     }
 
     sqlite3_bind_int(stmt, 1, delta);
@@ -830,7 +896,9 @@ bool DataBase::incrementListProgress(int listID, int delta) {
     rc = sqlite3_step(stmt);
     if (rc != SQLITE_DONE && rc != SQLITE_ROW) {
         sqlite3_finalize(stmt);
-        throw std::runtime_error("Execution failed: " + std::string(sqlite3_errmsg(db)));
+        QString errorMsg = "Execution failed for incrementListProgress UPDATE: " + QString::fromStdString(std::string(sqlite3_errmsg(db)));
+        qCritical() << errorMsg;
+        throw std::runtime_error(errorMsg.toStdString());
     }
 
     sqlite3_finalize(stmt);
@@ -842,7 +910,9 @@ bool DataBase::incrementListProgress(int listID, int delta) {
         sqlite3_stmt* istmt = nullptr;
         rc = sqlite3_prepare_v2(db, insertSql, -1, &istmt, nullptr);
         if (rc != SQLITE_OK) {
-            throw std::runtime_error("Failed to prepare statement: " + std::string(sqlite3_errmsg(db)));
+            QString errorMsg = "Failed to prepare statement for incrementListProgress INSERT: " + QString::fromStdString(std::string(sqlite3_errmsg(db)));
+            qCritical() << errorMsg;
+            throw std::runtime_error(errorMsg.toStdString());
         }
 
         sqlite3_bind_int(istmt, 1, listID);
@@ -851,7 +921,9 @@ bool DataBase::incrementListProgress(int listID, int delta) {
         rc = sqlite3_step(istmt);
         if (rc != SQLITE_DONE) {
             sqlite3_finalize(istmt);
-            throw std::runtime_error("Execution failed: " + std::string(sqlite3_errmsg(db)));
+            QString errorMsg = "Execution failed for incrementListProgress INSERT: " + QString::fromStdString(std::string(sqlite3_errmsg(db)));
+            qCritical() << errorMsg;
+            throw std::runtime_error(errorMsg.toStdString());
         }
 
         sqlite3_finalize(istmt);
@@ -867,7 +939,9 @@ int DataBase::addWordAndSetup(int listID, const std::string& word, const std::st
         int wordID = addOrGetWord(word, partOfSpeech, definition, language);
         if (wordID < 0) {
             rollbackTransaction();
-            throw std::runtime_error("Failed to obtain or create word id");
+            QString errorMsg = "Failed to obtain or create word id in addWordAndSetup";
+            qCritical() << errorMsg;
+            throw std::runtime_error(errorMsg.toStdString());
         }
 
         bool inserted = addWordToList(listID, wordID);
@@ -906,7 +980,9 @@ std::vector<DataBase::DueCard> DataBase::getDueCards(int listID) {
     sqlite3_stmt* stmt = nullptr;
     int rc = sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr);
     if (rc != SQLITE_OK) {
-        throw std::runtime_error("Failed to prepare statement: " + std::string(sqlite3_errmsg(db)));
+        QString errorMsg = "Failed to prepare statement for getDueCards: " + QString::fromStdString(std::string(sqlite3_errmsg(db)));
+        qCritical() << errorMsg;
+        throw std::runtime_error(errorMsg.toStdString());
     }
 
     if (listID >= 0) sqlite3_bind_int(stmt, 1, listID);
@@ -937,7 +1013,9 @@ bool DataBase::updateReviewScheduleForWord(int wordID, int listID, int repetitio
     sqlite3_stmt* stmt = nullptr;
     int rc = sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr);
     if (rc != SQLITE_OK) {
-        throw std::runtime_error("Failed to prepare statement: " + std::string(sqlite3_errmsg(db)));
+        QString errorMsg = "Failed to prepare statement for updateReviewScheduleForWord: " + QString::fromStdString(std::string(sqlite3_errmsg(db)));
+        qCritical() << errorMsg;
+        throw std::runtime_error(errorMsg.toStdString());
     }
 
     sqlite3_bind_int(stmt, 1, repetition_count);
@@ -954,7 +1032,9 @@ bool DataBase::updateReviewScheduleForWord(int wordID, int listID, int repetitio
     rc = sqlite3_step(stmt);
     if (rc != SQLITE_DONE) {
         sqlite3_finalize(stmt);
-        throw std::runtime_error("Execution failed: " + std::string(sqlite3_errmsg(db)));
+        QString errorMsg = "Execution failed for updateReviewScheduleForWord: " + QString::fromStdString(std::string(sqlite3_errmsg(db)));
+        qCritical() << errorMsg;
+        throw std::runtime_error(errorMsg.toStdString());
     }
 
     sqlite3_finalize(stmt);
@@ -966,7 +1046,9 @@ bool DataBase::recordStudySession(int wordID, int listID, bool was_correct, int 
     sqlite3_stmt* stmt = nullptr;
     int rc = sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr);
     if (rc != SQLITE_OK) {
-        throw std::runtime_error("Failed to prepare statement: " + std::string(sqlite3_errmsg(db)));
+        QString errorMsg = "Failed to prepare statement for recordStudySession: " + QString::fromStdString(std::string(sqlite3_errmsg(db)));
+        qCritical() << errorMsg;
+        throw std::runtime_error(errorMsg.toStdString());
     }
 
     sqlite3_bind_int(stmt, 1, wordID);
@@ -985,7 +1067,9 @@ bool DataBase::recordStudySession(int wordID, int listID, bool was_correct, int 
     rc = sqlite3_step(stmt);
     if (rc != SQLITE_DONE) {
         sqlite3_finalize(stmt);
-        throw std::runtime_error("Execution failed: " + std::string(sqlite3_errmsg(db)));
+        QString errorMsg = "Execution failed for recordStudySession: " + QString::fromStdString(std::string(sqlite3_errmsg(db)));
+        qCritical() << errorMsg;
+        throw std::runtime_error(errorMsg.toStdString());
     }
 
     sqlite3_finalize(stmt);
@@ -1013,13 +1097,21 @@ std::vector<std::pair<int, std::string>> DataBase::getRandomWordsInList(int list
     if (listID >= 0) {
         if (excludeWordID >= 0) {
             rc = sqlite3_prepare_v2(db, sql_with_exclude, -1, &stmt, nullptr);
-            if (rc != SQLITE_OK) throw std::runtime_error("Failed to prepare statement: " + std::string(sqlite3_errmsg(db)));
+            if (rc != SQLITE_OK) {
+                QString errorMsg = "Failed to prepare statement for getRandomWordsInList (with exclude): " + QString::fromStdString(std::string(sqlite3_errmsg(db)));
+                qCritical() << errorMsg;
+                throw std::runtime_error(errorMsg.toStdString());
+            }
             sqlite3_bind_int(stmt, 1, listID);
             sqlite3_bind_int(stmt, 2, excludeWordID);
             sqlite3_bind_int(stmt, 3, count);
         } else {
             rc = sqlite3_prepare_v2(db, sql_no_exclude, -1, &stmt, nullptr);
-            if (rc != SQLITE_OK) throw std::runtime_error("Failed to prepare statement: " + std::string(sqlite3_errmsg(db)));
+            if (rc != SQLITE_OK) {
+                QString errorMsg = "Failed to prepare statement for getRandomWordsInList (no exclude): " + QString::fromStdString(std::string(sqlite3_errmsg(db)));
+                qCritical() << errorMsg;
+                throw std::runtime_error(errorMsg.toStdString());
+            }
             sqlite3_bind_int(stmt, 1, listID);
             sqlite3_bind_int(stmt, 2, count);
         }
@@ -1027,12 +1119,20 @@ std::vector<std::pair<int, std::string>> DataBase::getRandomWordsInList(int list
         // global across all words
         if (excludeWordID >= 0) {
             rc = sqlite3_prepare_v2(db, sql_global_with_exclude, -1, &stmt, nullptr);
-            if (rc != SQLITE_OK) throw std::runtime_error("Failed to prepare statement: " + std::string(sqlite3_errmsg(db)));
+            if (rc != SQLITE_OK) {
+                QString errorMsg = "Failed to prepare statement for getRandomWordsInList (global with exclude): " + QString::fromStdString(std::string(sqlite3_errmsg(db)));
+                qCritical() << errorMsg;
+                throw std::runtime_error(errorMsg.toStdString());
+            }
             sqlite3_bind_int(stmt, 1, excludeWordID);
             sqlite3_bind_int(stmt, 2, count);
         } else {
             rc = sqlite3_prepare_v2(db, sql_global_no_exclude, -1, &stmt, nullptr);
-            if (rc != SQLITE_OK) throw std::runtime_error("Failed to prepare statement: " + std::string(sqlite3_errmsg(db)));
+            if (rc != SQLITE_OK) {
+                QString errorMsg = "Failed to prepare statement for getRandomWordsInList (global no exclude): " + QString::fromStdString(std::string(sqlite3_errmsg(db)));
+                qCritical() << errorMsg;
+                throw std::runtime_error(errorMsg.toStdString());
+            }
             sqlite3_bind_int(stmt, 1, count);
         }
     }
@@ -1059,11 +1159,19 @@ std::vector<std::tuple<int, std::string, std::string>> DataBase::getWordsInList(
     int rc;
     if (listID >= 0) {
         rc = sqlite3_prepare_v2(db, sql_in_list, -1, &stmt, nullptr);
-        if (rc != SQLITE_OK) throw std::runtime_error("Failed to prepare statement: " + std::string(sqlite3_errmsg(db)));
+        if (rc != SQLITE_OK) {
+            QString errorMsg = "Failed to prepare statement for getWordsInList (in list): " + QString::fromStdString(std::string(sqlite3_errmsg(db)));
+            qCritical() << errorMsg;
+            throw std::runtime_error(errorMsg.toStdString());
+        }
         sqlite3_bind_int(stmt, 1, listID);
     } else {
         rc = sqlite3_prepare_v2(db, sql_all, -1, &stmt, nullptr);
-        if (rc != SQLITE_OK) throw std::runtime_error("Failed to prepare statement: " + std::string(sqlite3_errmsg(db)));
+        if (rc != SQLITE_OK) {
+            QString errorMsg = "Failed to prepare statement for getWordsInList (all): " + QString::fromStdString(std::string(sqlite3_errmsg(db)));
+            qCritical() << errorMsg;
+            throw std::runtime_error(errorMsg.toStdString());
+        }
     }
 
     while ((rc = sqlite3_step(stmt)) == SQLITE_ROW) {
@@ -1088,7 +1196,9 @@ int DataBase::getNewCardCount(int listID) {
     sqlite3_stmt* stmt = nullptr;
     int rc = sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr);
     if (rc != SQLITE_OK) {
-        throw std::runtime_error("Failed to prepare statement: " + std::string(sqlite3_errmsg(db)));
+        QString errorMsg = "Failed to prepare statement for getNewCardCount: " + QString::fromStdString(std::string(sqlite3_errmsg(db)));
+        qCritical() << errorMsg;
+        throw std::runtime_error(errorMsg.toStdString());
     }
     
     sqlite3_bind_int(stmt, 1, listID);
@@ -1111,7 +1221,9 @@ int DataBase::getContinuingCardCount(int listID) {
     sqlite3_stmt* stmt = nullptr;
     int rc = sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr);
     if (rc != SQLITE_OK) {
-        throw std::runtime_error("Failed to prepare statement: " + std::string(sqlite3_errmsg(db)));
+        QString errorMsg = "Failed to prepare statement for getContinuingCardCount: " + QString::fromStdString(std::string(sqlite3_errmsg(db)));
+        qCritical() << errorMsg;
+        throw std::runtime_error(errorMsg.toStdString());
     }
     
     sqlite3_bind_int(stmt, 1, listID);
@@ -1134,7 +1246,9 @@ int DataBase::getReviewCardCount(int listID) {
     sqlite3_stmt* stmt = nullptr;
     int rc = sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr);
     if (rc != SQLITE_OK) {
-        throw std::runtime_error("Failed to prepare statement: " + std::string(sqlite3_errmsg(db)));
+        QString errorMsg = "Failed to prepare statement for getReviewCardCount: " + QString::fromStdString(std::string(sqlite3_errmsg(db)));
+        qCritical() << errorMsg;
+        throw std::runtime_error(errorMsg.toStdString());
     }
     
     sqlite3_bind_int(stmt, 1, listID);

@@ -2,6 +2,7 @@
 #include "ui_addcardwindow.h"
 #include <QMessageBox>
 #include <QRegularExpression>
+#include <QDebug>
 #include <stdexcept>
 
 AddCardWindow::AddCardWindow(QWidget *parent, DataBase* dataBase)
@@ -244,6 +245,7 @@ void AddCardWindow::on_addButton_clicked() {
     std::string listName = listNameQ.toStdString();
 
     if (listNameQ.isEmpty() || listNameQ == "Select Option") {
+        qWarning() << "No vocabulary list selected when trying to add card";
         QMessageBox::warning(this, "Invalid List", "Please select a vocabulary list.");
         return;
     }
@@ -251,6 +253,7 @@ void AddCardWindow::on_addButton_clicked() {
     QString wordQ = ui->wordInput->text();
     std::string word = wordQ.toStdString();
     if (wordQ.trimmed().isEmpty()) {
+        qWarning() << "Empty word input when trying to add card";
         QMessageBox::warning(this, "Invalid Word", "Please enter a word.");
         return;
     }
@@ -290,6 +293,7 @@ void AddCardWindow::on_addButton_clicked() {
     // Find list id
     int listID = db->getListId(listName);
     if (listID < 0) {
+        qWarning() << "Selected list not found in database:" << listNameQ;
         QMessageBox::warning(this, "List Not Found", "Selected list was not found in the database.");
         return;
     }
@@ -322,6 +326,7 @@ void AddCardWindow::on_addButton_clicked() {
                     db->createNewRelation(wordID, relatedWordID, relationTypeQ.toStdString());
                 } else {
                     // Word doesn't exist yet, show a warning but don't fail
+                    qWarning() << "Related word not found in database:" << relatedWordQ;
                     QMessageBox::warning(this, "Related Word Not Found", 
                         QString("The related word '%1' was not found in the database. The word has been added without this relation.").arg(relatedWordQ));
                 }
@@ -330,6 +335,7 @@ void AddCardWindow::on_addButton_clicked() {
 
         accept(); // close dialog with success
     } catch (const std::exception& ex) {
+        qCritical() << "Database error when adding card:" << ex.what();
         QMessageBox::critical(this, "Database Error", QString::fromStdString(ex.what()));
     }
 }
