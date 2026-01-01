@@ -11,6 +11,7 @@
 #include <QMessageBox>
 #include <QHeaderView>
 #include <QDebug>
+#include <QTimer>
 #include <sstream>
 #include <random>
 #include <ctime>
@@ -126,6 +127,32 @@ MainWindow::MainWindow(QWidget *parent)
     // Mode panel buttons use Qt auto-connect (on_<objectName>_<signalName> pattern)
     // Don't manually connect startStudyButton - it uses auto-connect via on_startStudyButton_clicked
     // Don't manually connect the top 'Decks' button — use Qt auto-connect by naming the slot `on_listDecks_clicked`
+    
+    // Initialize visibility - show only deck list on startup
+    ui->deckList->setVisible(true);
+    ui->selectedDeckLabel->setVisible(false);
+    ui->studyModeComboBox->setVisible(false);
+    ui->startStudyButton->setVisible(false);
+    ui->viewAllButton->setVisible(false);
+    ui->deleteListButton->setVisible(false);
+    ui->studyWordLabel->setVisible(false);
+    ui->revealButton->setVisible(false);
+    ui->studyDefinitionLabel->setVisible(false);
+    ui->additionalInfoBox->setVisible(false);
+    ui->typingPromptLabel->setVisible(false);
+    ui->typingInput->setVisible(false);
+    ui->submitTypingButton->setVisible(false);
+    ui->typingFeedbackLabel->setVisible(false);
+    for (int i = 0; i < 4; ++i) {
+        choiceButtons[i]->setVisible(false);
+    }
+    ui->againButton->setVisible(false);
+    ui->hardButton->setVisible(false);
+    ui->goodButton->setVisible(false);
+    ui->easyButton->setVisible(false);
+    
+    // Apply initial theme (light mode by default)
+    applyLightTheme();
 }
 
 MainWindow::~MainWindow() {
@@ -139,7 +166,7 @@ void MainWindow::on_addWord_clicked() {
     addCardWindow.exec();
 }
 
-void MainWindow::on_creatDeck_clicked() {
+void MainWindow::on_createDeck_clicked() {
     AddListWindow addListWindow{nullptr, &db};
     QObject::connect(&addListWindow, &AddListWindow::newAddedList, this, &MainWindow::updatingList);
     addListWindow.applyTheme(isDarkMode);
@@ -265,6 +292,72 @@ void MainWindow::on_showStats_clicked() {
 
     QDialog dlg(this);
     dlg.setWindowTitle("Study Sessions Summary");
+    
+    // Apply current theme to the dialog
+    if (isDarkMode) {
+        dlg.setStyleSheet(R"(
+            QDialog {
+                background-color: #1e1e1e;
+            }
+            QWidget {
+                background-color: #1e1e1e;
+                color: #e0e0e0;
+            }
+            QPushButton {
+                background-color: #2d2d30;
+                color: #e0e0e0;
+                border: 1px solid #3e3e42;
+                border-radius: 4px;
+                padding: 8px 16px;
+            }
+            QPushButton:hover {
+                background-color: #3e3e42;
+                border-color: #007acc;
+            }
+            QPushButton:pressed {
+                background-color: #007acc;
+            }
+            QTextEdit {
+                background-color: #252526;
+                color: #e0e0e0;
+                border: 1px solid #3e3e42;
+                border-radius: 4px;
+                padding: 6px;
+            }
+        )");
+    } else {
+        dlg.setStyleSheet(R"(
+            QDialog {
+                background-color: #ffffff;
+            }
+            QWidget {
+                background-color: #ffffff;
+                color: #2c3e50;
+            }
+            QPushButton {
+                background-color: #ecf0f1;
+                color: #2c3e50;
+                border: 1px solid #bdc3c7;
+                border-radius: 4px;
+                padding: 8px 16px;
+            }
+            QPushButton:hover {
+                background-color: #d5dbdb;
+                border-color: #95a5a6;
+            }
+            QPushButton:pressed {
+                background-color: #bdc3c7;
+            }
+            QTextEdit {
+                background-color: #ffffff;
+                color: #2c3e50;
+                border: 1px solid #bdc3c7;
+                border-radius: 4px;
+                padding: 6px;
+            }
+        )");
+    }
+    
     QVBoxLayout* layout = new QVBoxLayout(&dlg);
     QTextEdit* view = new QTextEdit(&dlg);
     view->setReadOnly(true);
@@ -300,6 +393,72 @@ void MainWindow::on_viewAllButton_clicked() {
 
     QDialog dlg(this);
     dlg.setWindowTitle("All Words");
+    
+    // Apply current theme to the dialog
+    if (isDarkMode) {
+        dlg.setStyleSheet(R"(
+            QDialog {
+                background-color: #1e1e1e;
+            }
+            QWidget {
+                background-color: #1e1e1e;
+                color: #e0e0e0;
+            }
+            QPushButton {
+                background-color: #2d2d30;
+                color: #e0e0e0;
+                border: 1px solid #3e3e42;
+                border-radius: 4px;
+                padding: 8px 16px;
+            }
+            QPushButton:hover {
+                background-color: #3e3e42;
+                border-color: #007acc;
+            }
+            QPushButton:pressed {
+                background-color: #007acc;
+            }
+            QTextEdit {
+                background-color: #252526;
+                color: #e0e0e0;
+                border: 1px solid #3e3e42;
+                border-radius: 4px;
+                padding: 6px;
+            }
+        )");
+    } else {
+        dlg.setStyleSheet(R"(
+            QDialog {
+                background-color: #ffffff;
+            }
+            QWidget {
+                background-color: #ffffff;
+                color: #2c3e50;
+            }
+            QPushButton {
+                background-color: #ecf0f1;
+                color: #2c3e50;
+                border: 1px solid #bdc3c7;
+                border-radius: 4px;
+                padding: 8px 16px;
+            }
+            QPushButton:hover {
+                background-color: #d5dbdb;
+                border-color: #95a5a6;
+            }
+            QPushButton:pressed {
+                background-color: #bdc3c7;
+            }
+            QTextEdit {
+                background-color: #ffffff;
+                color: #2c3e50;
+                border: 1px solid #bdc3c7;
+                border-radius: 4px;
+                padding: 6px;
+            }
+        )");
+    }
+    
     QVBoxLayout* layout = new QVBoxLayout(&dlg);
     QTextEdit* view = new QTextEdit(&dlg);
     view->setReadOnly(true);
@@ -334,7 +493,11 @@ void MainWindow::on_deleteListButton_clicked() {
             // Reset pending state and go back to deck list view
             pendingListID = -1;
             pendingListName.clear();
-            ui->modePanel->setVisible(false);
+            ui->selectedDeckLabel->setVisible(false);
+            ui->studyModeComboBox->setVisible(false);
+            ui->startStudyButton->setVisible(false);
+            ui->viewAllButton->setVisible(false);
+            ui->deleteListButton->setVisible(false);
             ui->deckList->setVisible(true);
             
             // Refresh the list
@@ -482,7 +645,10 @@ void MainWindow::showCurrentCard() {
         ui->additionalInfoBox->setVisible(false);
         ui->revealButton->setVisible(true);
         ui->revealButton->setEnabled(true);
-        ui->typingWidget->setVisible(false);
+        ui->typingPromptLabel->setVisible(false);
+        ui->typingInput->setVisible(false);
+        ui->submitTypingButton->setVisible(false);
+        ui->typingFeedbackLabel->setVisible(false);
         // hide choice buttons
         for (int i = 0; i < 4; ++i) choiceButtons[i]->setVisible(false);
         // show rating buttons in flashcard mode but disable them until card is revealed
@@ -499,7 +665,10 @@ void MainWindow::showCurrentCard() {
         ui->studyDefinitionLabel->setVisible(false);
         ui->additionalInfoBox->setVisible(true);
         ui->revealButton->setVisible(false);
-        ui->typingWidget->setVisible(false);
+        ui->typingPromptLabel->setVisible(false);
+        ui->typingInput->setVisible(false);
+        ui->submitTypingButton->setVisible(false);
+        ui->typingFeedbackLabel->setVisible(false);
         // hide rating buttons in multiple choice mode
         ui->againButton->setVisible(false);
         ui->hardButton->setVisible(false);
@@ -535,13 +704,17 @@ void MainWindow::showCurrentCard() {
             choiceButtons[i]->setText(QString::fromStdString(options[i]));
             choiceButtons[i]->setVisible(true);
             choiceButtons[i]->setEnabled(true);
+            choiceButtons[i]->setStyleSheet("");  // Reset any previous styling
             if (options[i] == correctText) correctChoiceIndex = i;
         }
     } else if (studyMode == StudyMode::Typing) {
         // Typing mode
         ui->studyDefinitionLabel->setVisible(false);
         ui->revealButton->setVisible(false);
-        ui->typingWidget->setVisible(true);
+        ui->typingPromptLabel->setVisible(true);
+        ui->typingInput->setVisible(true);
+        ui->submitTypingButton->setVisible(true);
+        ui->typingFeedbackLabel->setVisible(true);
         ui->typingInput->clear();
         ui->typingInput->setEnabled(true);
         ui->submitTypingButton->setEnabled(true);
@@ -642,13 +815,22 @@ void MainWindow::onChoiceSelected() {
     for (int i = 0; i < 4; ++i) choiceButtons[i]->setEnabled(false);
 
     if (chosen == correctChoiceIndex) {
-        QMessageBox::information(this, "Correct", "Correct!");
-        // treat as easy
-        applyRating(5);
+        // Highlight correct answer in green
+        choiceButtons[chosen]->setStyleSheet("background-color: #2ecc71; color: white; font-weight: bold;");
+        
+        // Move to next card after a brief delay
+        QTimer::singleShot(1000, this, [this]() {
+            applyRating(5);
+        });
     } else {
-        QMessageBox::information(this, "Incorrect", "Incorrect. The correct answer will be used to update scheduling.");
-        // treat as again
-        applyRating(0);
+        // Highlight wrong answer in red and correct answer in green
+        choiceButtons[chosen]->setStyleSheet("background-color: #e74c3c; color: white; font-weight: bold;");
+        choiceButtons[correctChoiceIndex]->setStyleSheet("background-color: #2ecc71; color: white; font-weight: bold;");
+        
+        // Move to next card after showing feedback for a moment
+        QTimer::singleShot(1500, this, [this]() {
+            applyRating(0);
+        });
     }
 }
 
@@ -669,8 +851,10 @@ void MainWindow::onSubmitTypedAnswer() {
         ui->typingInput->setEnabled(false);
         ui->submitTypingButton->setEnabled(false);
         
-        // Rate as good (quality 4)
-        applyRating(4);
+        // Rate as good (quality 4) and move to next card after a brief delay
+        QTimer::singleShot(1000, this, [this]() {
+            applyRating(4);
+        });
     } else {
         typingAttempts++;
         
@@ -697,6 +881,10 @@ void MainWindow::onSubmitTypedAnswer() {
             ui->studyDefinitionLabel->setText(correctAnswer);
             ui->studyDefinitionLabel->setVisible(true);
             
+            // Show message box with correct answer
+            QMessageBox::information(this, "Incorrect", 
+                "✗ Your answer was incorrect.\n\nThe correct answer is: " + correctAnswer);
+            
             // Rate as again (quality 0)
             applyRating(0);
         }
@@ -705,8 +893,27 @@ void MainWindow::onSubmitTypedAnswer() {
 
 void MainWindow::showDeckList() {
     ui->deckList->setVisible(true);
-    ui->modePanel->setVisible(false);
-    ui->studyPanel->setVisible(false);
+    ui->selectedDeckLabel->setVisible(false);
+    ui->studyModeComboBox->setVisible(false);
+    ui->startStudyButton->setVisible(false);
+    ui->viewAllButton->setVisible(false);
+    ui->deleteListButton->setVisible(false);
+    ui->studyWordLabel->setVisible(false);
+    ui->revealButton->setVisible(false);
+    ui->studyDefinitionLabel->setVisible(false);
+    ui->additionalInfoBox->setVisible(false);
+    ui->typingPromptLabel->setVisible(false);
+    ui->typingInput->setVisible(false);
+    ui->submitTypingButton->setVisible(false);
+    ui->typingFeedbackLabel->setVisible(false);
+    ui->againButton->setVisible(false);
+    ui->hardButton->setVisible(false);
+    ui->goodButton->setVisible(false);
+    ui->easyButton->setVisible(false);
+    for (int i = 0; i < 4; ++i) {
+        choiceButtons[i]->setVisible(false);
+    }
+    ui->createDeck->setVisible(true);
     pendingListID = -1;
     pendingListName.clear();
     updatingList();
@@ -714,14 +921,26 @@ void MainWindow::showDeckList() {
 
 void MainWindow::showModePanel() {
     ui->deckList->setVisible(false);
-    ui->modePanel->setVisible(true);
-    ui->studyPanel->setVisible(false);
+    ui->selectedDeckLabel->setVisible(true);
+    ui->studyModeComboBox->setVisible(true);
+    ui->startStudyButton->setVisible(true);
+    ui->viewAllButton->setVisible(true);
+    ui->deleteListButton->setVisible(true);
+    ui->studyWordLabel->setVisible(false);
+    ui->revealButton->setVisible(false);
+    ui->studyDefinitionLabel->setVisible(false);
+    ui->additionalInfoBox->setVisible(false);
 }
 
 void MainWindow::showStudyPanel() {
     ui->deckList->setVisible(false);
-    ui->modePanel->setVisible(false);
-    ui->studyPanel->setVisible(true);
+    ui->selectedDeckLabel->setVisible(false);
+    ui->studyModeComboBox->setVisible(false);
+    ui->startStudyButton->setVisible(false);
+    ui->viewAllButton->setVisible(false);
+    ui->deleteListButton->setVisible(false);
+    ui->studyWordLabel->setVisible(true);
+    ui->createDeck->setVisible(false);
     // Don't call showCurrentCard here - it's called by loadDueCards or loadRandomPracticeCards
     // Calling it here causes the card to be displayed before the panel is fully set up
     if (currentCardIndex < studyCards.size()) {
@@ -842,6 +1061,37 @@ void MainWindow::applyLightTheme() {
             padding: 6px;
         }
         
+        QTableWidget {
+            background-color: #ffffff;
+            color: #2c3e50;
+            border: 1px solid #bdc3c7;
+            border-radius: 4px;
+            gridline-color: #bdc3c7;
+            selection-background-color: #3498db;
+            selection-color: #ffffff;
+        }
+        
+        QTableWidget::item {
+            padding: 8px;
+        }
+        
+        QTableWidget::item:selected {
+            background-color: #3498db;
+            color: #ffffff;
+        }
+        
+        QTableWidget::item:hover {
+            background-color: #ecf0f1;
+        }
+        
+        QHeaderView::section {
+            background-color: #ecf0f1;
+            color: #2c3e50;
+            border: 1px solid #bdc3c7;
+            padding: 6px;
+            font-weight: bold;
+        }
+        
         QGroupBox {
             color: #2c3e50;
             border: 2px solid #bdc3c7;
@@ -941,8 +1191,10 @@ void MainWindow::applyDarkTheme() {
             background-color: #2d2d30;
             color: #e0e0e0;
             border: 1px solid #3e3e42;
-            border-radius: 4px;
-            padding: 6px;
+            padding: 5px;
+            min-height: 20px;
+            margin: 0px;
+            outline: 0;
         }
         
         QComboBox:hover {
@@ -951,6 +1203,7 @@ void MainWindow::applyDarkTheme() {
         
         QComboBox::drop-down {
             border: none;
+            margin: 0px;
         }
         
         QComboBox QAbstractItemView {
@@ -983,6 +1236,37 @@ void MainWindow::applyDarkTheme() {
             border: 1px solid #3e3e42;
             border-radius: 4px;
             padding: 6px;
+        }
+        
+        QTableWidget {
+            background-color: #252526;
+            color: #e0e0e0;
+            border: 1px solid #3e3e42;
+            border-radius: 4px;
+            gridline-color: #3e3e42;
+            selection-background-color: #007acc;
+            selection-color: #ffffff;
+        }
+        
+        QTableWidget::item {
+            padding: 8px;
+        }
+        
+        QTableWidget::item:selected {
+            background-color: #007acc;
+            color: #ffffff;
+        }
+        
+        QTableWidget::item:hover {
+            background-color: #2d2d30;
+        }
+        
+        QHeaderView::section {
+            background-color: #2d2d30;
+            color: #e0e0e0;
+            border: 1px solid #3e3e42;
+            padding: 6px;
+            font-weight: bold;
         }
         
         QGroupBox {

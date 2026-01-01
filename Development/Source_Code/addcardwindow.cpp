@@ -37,14 +37,14 @@ void AddCardWindow::on_toggleAdditionalOptionsButton_toggled(bool checked) {
 
 void AddCardWindow::applyTheme(bool isDark) {
     if (isDark) {
-        // Dark theme
+        // Dark theme - modern and easy on the eyes
         QString darkStyle = R"(
-            QDialog {
+            QDialog, QMainWindow {
                 background-color: #1e1e1e;
-                color: #e0e0e0;
             }
             
-            QLabel {
+            QWidget {
+                background-color: #1e1e1e;
                 color: #e0e0e0;
             }
             
@@ -70,16 +70,56 @@ void AddCardWindow::applyTheme(bool isDark) {
                 color: #656565;
             }
             
-            QLineEdit {
+            QListWidget {
                 background-color: #252526;
                 color: #e0e0e0;
                 border: 1px solid #3e3e42;
                 border-radius: 4px;
-                padding: 6px;
+                selection-background-color: #007acc;
+                selection-color: #ffffff;
             }
             
-            QLineEdit:focus {
+            QListWidget::item {
+                padding: 8px;
+            }
+            
+            QListWidget::item:selected {
+                background-color: #007acc;
+                color: #ffffff;
+            }
+            
+            QListWidget::item:hover {
+                background-color: #2d2d30;
+            }
+            
+            QComboBox {
+                background-color: #2d2d30;
+                color: #e0e0e0;
+                border: 1px solid #3e3e42;
+                padding: 5px;
+                min-height: 20px;
+                margin: 0px;
+                outline: 0;
+            }
+            
+            QComboBox:hover {
                 border-color: #007acc;
+            }
+            
+            QComboBox::drop-down {
+                border: none;
+                margin: 0px;
+            }
+            
+            QComboBox QAbstractItemView {
+                background-color: #252526;
+                color: #e0e0e0;
+                selection-background-color: #007acc;
+                selection-color: #ffffff;
+            }
+            
+            QLabel {
+                color: #e0e0e0;
             }
             
             QTextEdit {
@@ -90,31 +130,43 @@ void AddCardWindow::applyTheme(bool isDark) {
                 padding: 6px;
             }
             
-            QTextEdit:focus {
-                border-color: #007acc;
-            }
-            
-            QComboBox {
-                background-color: #2d2d30;
+            QLineEdit {
+                background-color: #252526;
                 color: #e0e0e0;
                 border: 1px solid #3e3e42;
                 border-radius: 4px;
                 padding: 6px;
             }
             
-            QComboBox:hover {
-                border-color: #007acc;
-            }
-            
-            QComboBox::drop-down {
-                border: none;
-            }
-            
-            QComboBox QAbstractItemView {
+            QTableWidget {
                 background-color: #252526;
                 color: #e0e0e0;
+                border: 1px solid #3e3e42;
+                border-radius: 4px;
+                gridline-color: #3e3e42;
                 selection-background-color: #007acc;
                 selection-color: #ffffff;
+            }
+            
+            QTableWidget::item {
+                padding: 8px;
+            }
+            
+            QTableWidget::item:selected {
+                background-color: #007acc;
+                color: #ffffff;
+            }
+            
+            QTableWidget::item:hover {
+                background-color: #2d2d30;
+            }
+            
+            QHeaderView::section {
+                background-color: #2d2d30;
+                color: #e0e0e0;
+                border: 1px solid #3e3e42;
+                padding: 6px;
+                font-weight: bold;
             }
             
             QGroupBox {
@@ -123,7 +175,6 @@ void AddCardWindow::applyTheme(bool isDark) {
                 border-radius: 6px;
                 margin-top: 12px;
                 padding-top: 8px;
-                font-weight: bold;
             }
             
             QGroupBox::title {
@@ -135,14 +186,14 @@ void AddCardWindow::applyTheme(bool isDark) {
         )";
         this->setStyleSheet(darkStyle);
     } else {
-        // Light theme
+        // Light theme - clean and minimal
         QString lightStyle = R"(
-            QDialog {
+            QDialog, QMainWindow {
                 background-color: #ffffff;
-                color: #2c3e50;
             }
             
-            QLabel {
+            QWidget {
+                background-color: #ffffff;
                 color: #2c3e50;
             }
             
@@ -168,28 +219,26 @@ void AddCardWindow::applyTheme(bool isDark) {
                 color: #95a5a6;
             }
             
-            QLineEdit {
+            QListWidget {
                 background-color: #ffffff;
                 color: #2c3e50;
                 border: 1px solid #bdc3c7;
                 border-radius: 4px;
-                padding: 6px;
+                selection-background-color: #3498db;
+                selection-color: #ffffff;
             }
             
-            QLineEdit:focus {
-                border-color: #3498db;
+            QListWidget::item {
+                padding: 8px;
             }
             
-            QTextEdit {
-                background-color: #ffffff;
-                color: #2c3e50;
-                border: 1px solid #bdc3c7;
-                border-radius: 4px;
-                padding: 6px;
+            QListWidget::item:selected {
+                background-color: #3498db;
+                color: #ffffff;
             }
             
-            QTextEdit:focus {
-                border-color: #3498db;
+            QListWidget::item:hover {
+                background-color: #ecf0f1;
             }
             
             QComboBox {
@@ -215,13 +264,63 @@ void AddCardWindow::applyTheme(bool isDark) {
                 selection-color: #ffffff;
             }
             
+            QLabel {
+                color: #2c3e50;
+            }
+            
+            QTextEdit {
+                background-color: #ffffff;
+                color: #2c3e50;
+                border: 1px solid #bdc3c7;
+                border-radius: 4px;
+                padding: 6px;
+            }
+            
+            QLineEdit {
+                background-color: #ffffff;
+                color: #2c3e50;
+                border: 1px solid #bdc3c7;
+                border-radius: 4px;
+                padding: 6px;
+            }
+            
+            QTableWidget {
+                background-color: #ffffff;
+                color: #2c3e50;
+                border: 1px solid #bdc3c7;
+                border-radius: 4px;
+                gridline-color: #bdc3c7;
+                selection-background-color: #3498db;
+                selection-color: #ffffff;
+            }
+            
+            QTableWidget::item {
+                padding: 8px;
+            }
+            
+            QTableWidget::item:selected {
+                background-color: #3498db;
+                color: #ffffff;
+            }
+            
+            QTableWidget::item:hover {
+                background-color: #ecf0f1;
+            }
+            
+            QHeaderView::section {
+                background-color: #ecf0f1;
+                color: #2c3e50;
+                border: 1px solid #bdc3c7;
+                padding: 6px;
+                font-weight: bold;
+            }
+            
             QGroupBox {
                 color: #2c3e50;
                 border: 2px solid #bdc3c7;
                 border-radius: 6px;
                 margin-top: 12px;
                 padding-top: 8px;
-                font-weight: bold;
             }
             
             QGroupBox::title {
