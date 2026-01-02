@@ -1,0 +1,247 @@
+@startuml IA_Project_Class_Diagram
+
+' Qt Framework Classes
+class QMainWindow <<Qt>>
+class QDialog <<Qt>>
+class QNetworkAccessManager <<Qt>>
+
+' Main Application Classes
+class MainWindow {
+  - ui : Ui::MainWindow*
+  - db : DataBase
+  - pendingListID : int
+  - pendingListName : QString
+  - currentStudyListID : int
+  - studyCards : vector<DataBase::DueCard>
+  - currentCardIndex : size_t
+  - studyMode : StudyMode
+  - choiceButtons : QPushButton*[4]
+  - correctChoiceIndex : int
+  - isRandomPractice : bool
+  - recentlySeenWordIds : vector<int>
+  - isDarkMode : bool
+  - typingAttempts : int
+  - showingExample : bool
+  
+  + MainWindow(parent : QWidget*)
+  + ~MainWindow()
+  + getDB() : DataBase*
+  
+  - on_addWord_clicked() : void
+  - on_createDeck_clicked() : void
+  - on_aiCreate_clicked() : void
+  - updatingList() : void
+  - startStudy() : void
+  - deckListDoubleClicked(item : QTableWidgetItem*) : void
+  - on_startStudyButton_clicked() : void
+  - on_listDecks_clicked() : void
+  - on_showStats_clicked() : void
+  - on_viewAllButton_clicked() : void
+  - on_deleteListButton_clicked() : void
+  - on_actionToggleDarkMode_triggered(checked : bool) : void
+  - onReveal() : void
+  - onRateAgain() : void
+  - onRateHard() : void
+  - onRateGood() : void
+  - onRateEasy() : void
+  - onChoiceSelected() : void
+  - onSubmitTypedAnswer() : void
+  - loadDueCards() : void
+  - loadRandomPracticeCards() : void
+  - showCurrentCard() : void
+  - applyRating(quality : int) : void
+  - showDeckList() : void
+  - showModePanel() : void
+  - showStudyPanel() : void
+  - applyLightTheme() : void
+  - applyDarkTheme() : void
+}
+
+enum StudyMode {
+  Flashcard
+  MultipleChoice
+  Typing
+}
+
+class AddCardWindow {
+  - ui : Ui::AddCardWindow*
+  - db : DataBase*
+  
+  + AddCardWindow(parent : QWidget*, dataBase : DataBase*)
+  + ~AddCardWindow()
+  + applyTheme(isDark : bool) : void
+  
+  - on_cancelAdding_clicked() : void
+  - on_addButton_clicked() : void
+  - on_toggleAdditionalOptionsButton_toggled(checked : bool) : void
+}
+
+class AddListWindow {
+  - ui : Ui::AddListWindow*
+  - db : DataBase*
+  
+  + AddListWindow(parent : QWidget*, dataBase : DataBase*)
+  + ~AddListWindow()
+  + applyTheme(isDark : bool) : void
+  
+  <<signals>>
+  + newAddedList() : void
+  
+  - on_cancelCreation_clicked() : void
+  - on_createList_clicked() : void
+}
+
+class AICreateWindow {
+  - ui : Ui::AICreateWindow*
+  - db : DataBase*
+  - manager : QNetworkAccessManager*
+  
+  + AICreateWindow(parent : QWidget*, db : DataBase*)
+  + ~AICreateWindow()
+  + applyTheme(isDark : bool) : void
+  
+  - on_generateButton_clicked() : void
+  - onNetworkReplyFinished(reply : QNetworkReply*) : void
+  - on_pushButton_clicked() : void
+}
+
+class DataBase {
+  - db : sqlite3*
+  
+  + DataBase(dbPath : const string&)
+  + ~DataBase()
+  + enableForeignKeys() : void
+  + createVocabListTable() : bool
+  + createWordsTable() : bool
+  + createListWordTable() : bool
+  + createStudySessionTable() : bool
+  + createReviewScheduleTable() : bool
+  + createExampleTable() : bool
+  + createListProgressTable() : bool
+  + createWordRelationTable() : bool
+  + beginTransaction() : bool
+  + commitTransaction() : bool
+  + rollbackTransaction() : bool
+  + getWordId(word : const string&, language : const string&) : int
+  + getListId(listName : const string&) : int
+  + addOrGetWord(word : const string&, partOfSpeech : const string&, definition : const string&, language : const string&) : int
+  + addWordToList(listID : int, wordID : int) : bool
+  + initReviewSchedule(wordID : int, listID : int) : bool
+  + incrementListProgress(listID : int, delta : int) : bool
+  + addWordAndSetup(listID : int, word : const string&, partOfSpeech : const string&, definition : const string&, language : const string&) : int
+  + createNewList(listName : string, targetLanguage : string, description : string) : bool
+  + deleteList(listID : int) : bool
+  + getVocabLists() : vector<string>
+  + getVocabListsWithNextReview() : vector<pair<string, string>>
+  + getDueCards(listID : int) : vector<DueCard>
+  + updateReviewScheduleForWord(wordID : int, listID : int, repetition_count : int, interval_days : int, ease_factor : double, next_review_date : const string&) : bool
+  + recordStudySession(wordID : int, listID : int, was_correct : bool, quality : int) : bool
+  + recordStudySession(wordID : int, listID : int, was_correct : bool, quality : int, study_mode : const string&) : bool
+  + getStudySessionSummary() : string
+  + getRandomWordsInList(listID : int, excludeWordID : int, count : int) : vector<pair<int, string>>
+  + getWordsInList(listID : int) : vector<tuple<int, string, string>>
+  + createNewExample(wordID : int, exampleText : string, contextNotes : string) : bool
+  + createNewRelation(word1ID : int, word2ID : int, relationType : string) : bool
+  + getWordExamples(wordID : int) : vector<WordExample>
+  + getWordRelations(wordID : int) : vector<WordRelation>
+  + getNewCardCount(listID : int) : int
+  + getContinuingCardCount(listID : int) : int
+  + getReviewCardCount(listID : int) : int
+}
+
+class DueCard <<struct>> {
+  + schedule_id : int
+  + word_id : int
+  + list_id : int
+  + word : string
+  + definition : string
+  + ease_factor : double
+  + interval_days : int
+  + repetition_count : int
+  + next_review_date : string
+}
+
+class WordExample <<struct>> {
+  + example_id : int
+  + example_text : string
+  + context_notes : string
+}
+
+class WordRelation <<struct>> {
+  + related_word_id : int
+  + related_word : string
+  + relation_type : string
+}
+
+class SpacedRepetitionCalculator {
+  - easinessFactor : double
+  - repetitions : int
+  - interval : int
+  - nextReview : time_t
+  
+  {static} + MIN_EF : constexpr double
+  {static} + MAX_EF : constexpr double
+  
+  + SpacedRepetitionCalculator()
+  + calculateNextReview(quality : int) : void
+  + isDue() : bool
+  + getEasinessFactor() : double
+  + getRepetitions() : int
+  + getInterval() : int
+  + getNextReview() : time_t
+  + setEasinessFactor(ef : double) : void
+  + setRepetitions(rep : int) : void
+  + setInterval(intv : int) : void
+  + setNextReview(next : time_t) : void
+}
+
+' Relationships
+MainWindow --|> QMainWindow : extends
+MainWindow *-- DataBase : contains
+MainWindow ..> SpacedRepetitionCalculator : uses
+MainWindow +-- StudyMode : nested enum
+
+AddCardWindow --|> QDialog : extends
+AddCardWindow o-- DataBase : references
+
+AddListWindow --|> QDialog : extends
+AddListWindow o-- DataBase : references
+
+AICreateWindow --|> QDialog : extends
+AICreateWindow o-- DataBase : references
+AICreateWindow *-- QNetworkAccessManager : contains
+
+DataBase +-- DueCard : nested struct
+DataBase +-- WordExample : nested struct
+DataBase +-- WordRelation : nested struct
+
+MainWindow ..> AddCardWindow : creates
+MainWindow ..> AddListWindow : creates
+MainWindow ..> AICreateWindow : creates
+MainWindow ..> DueCard : uses
+
+note right of DataBase
+  Central database class using SQLite
+  Manages all data persistence including:
+  - Vocabulary lists
+  - Words and definitions
+  - Study sessions
+  - Review schedules
+  - Examples and relations
+end note
+
+note right of SpacedRepetitionCalculator
+  Implements SM-2 algorithm for
+  spaced repetition learning
+end note
+
+note top of MainWindow
+  Main application window
+  Manages study sessions and UI
+  Supports multiple study modes:
+  - Flashcard
+  - Multiple Choice
+  - Typing
+end note
+
+@enduml
