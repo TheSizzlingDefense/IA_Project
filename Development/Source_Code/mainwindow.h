@@ -50,6 +50,7 @@ private:
     void showStudyPanel();
     void applyLightTheme();
     void applyDarkTheme();
+    void showTextDialog(const QString& title, const QString& text, int width = 480, int height = 320);
     
     Ui::MainWindow *ui;
 

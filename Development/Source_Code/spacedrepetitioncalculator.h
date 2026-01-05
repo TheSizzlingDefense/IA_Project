@@ -10,8 +10,6 @@ public:
 
     void calculateNextReview(int quality);
 
-    bool isDue() const;
-
     static constexpr double MIN_EF = 1.3;
     static constexpr double MAX_EF = 2.5;
 

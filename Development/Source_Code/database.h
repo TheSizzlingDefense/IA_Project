@@ -123,6 +123,13 @@ public:
 
 private:
     sqlite3* db;
+    
+    // Helper methods for error handling
+    sqlite3_stmt* prepareStatementOrThrow(const char* sql, const std::string& context);
+    void executeStatementOrThrow(sqlite3_stmt* stmt, const std::string& context);
+    
+    // Helper for card count queries
+    int getCardCount(int listID, const std::string& whereClause, const std::string& context);
 };
 
 #endif // DATABASE_H

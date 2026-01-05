@@ -3,6 +3,7 @@
 #include "spacedrepetitioncalculator.h"
 #include <QMessageBox>
 #include <QTimer>
+#include <QStyle>
 #include <random>
 #include <algorithm>
 #include <ctime>
@@ -145,8 +146,13 @@ void StudyPanel::showCurrentCard()
             choiceButtons[i]->setText(QString::fromStdString(options[i]));
             choiceButtons[i]->setVisible(true);
             choiceButtons[i]->setEnabled(true);
-            choiceButtons[i]->setStyleSheet("");  // Reset any previous styling
+            choiceButtons[i]->setStyleSheet("");
             if (options[i] == correctText) correctChoiceIndex = i;
+        }
+        // Force style update to ensure colors are reset
+        for (int i = 0; i < 4; ++i) {
+            choiceButtons[i]->style()->unpolish(choiceButtons[i]);
+            choiceButtons[i]->style()->polish(choiceButtons[i]);
         }
     } else if (studyMode == StudyMode::Typing) {
         // Typing mode
@@ -356,12 +362,10 @@ void StudyPanel::onSubmitTypedAnswer()
             ui->studyDefinitionLabel->setText(correctAnswer);
             ui->studyDefinitionLabel->setVisible(true);
             
-            // Show message box with correct answer
-            QMessageBox::information(this, "Incorrect", 
-                "✗ Your answer was incorrect.\n\nThe correct answer is: " + correctAnswer);
-            
-            // Rate as again (quality 0)
-            applyRating(0);
+            // Rate as again (quality 0) after a brief delay to show the correct answer
+            QTimer::singleShot(1500, this, [this]() {
+                applyRating(0);
+            });
         }
     }
 }

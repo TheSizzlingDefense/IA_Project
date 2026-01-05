@@ -30,7 +30,8 @@ HEADERS += \
     sqlite3.h \
     decklistpanel.h \
     modeselectorpanel.h \
-    studypanel.h
+    studypanel.h \
+    themeutils.h
 
 FORMS += \
     addcardwindow.ui \

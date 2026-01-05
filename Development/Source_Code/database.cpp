@@ -38,6 +38,31 @@ DataBase::~DataBase() {
     }
 }
 
+sqlite3_stmt* DataBase::prepareStatementOrThrow(const char* sql, const std::string& context) {
+    sqlite3_stmt* stmt = nullptr;
+    int rc = sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr);
+    if (rc != SQLITE_OK) {
+        QString errorMsg = QString("Failed to prepare statement for %1: %2")
+            .arg(QString::fromStdString(context))
+            .arg(QString::fromStdString(std::string(sqlite3_errmsg(db))));
+        qCritical() << errorMsg;
+        throw std::runtime_error(errorMsg.toStdString());
+    }
+    return stmt;
+}
+
+void DataBase::executeStatementOrThrow(sqlite3_stmt* stmt, const std::string& context) {
+    int rc = sqlite3_step(stmt);
+    if (rc != SQLITE_DONE && rc != SQLITE_ROW) {
+        sqlite3_finalize(stmt);
+        QString errorMsg = QString("Execution failed for %1: %2")
+            .arg(QString::fromStdString(context))
+            .arg(QString::fromStdString(std::string(sqlite3_errmsg(db))));
+        qCritical() << errorMsg;
+        throw std::runtime_error(errorMsg.toStdString());
+    }
+}
+
 void DataBase::enableForeignKeys() {
     char* errorMessage = nullptr;
 
@@ -1187,20 +1212,10 @@ std::vector<std::tuple<int, std::string, std::string>> DataBase::getWordsInList(
     return out;
 }
 
-// Get count of new cards (never reviewed) for a list
-int DataBase::getNewCardCount(int listID) {
-    const char* sql = 
-        "SELECT COUNT(*) FROM review_schedule "
-        "WHERE list_id = ? AND repetition_count = 0;";
-    
-    sqlite3_stmt* stmt = nullptr;
-    int rc = sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr);
-    if (rc != SQLITE_OK) {
-        QString errorMsg = "Failed to prepare statement for getNewCardCount: " + QString::fromStdString(std::string(sqlite3_errmsg(db)));
-        qCritical() << errorMsg;
-        throw std::runtime_error(errorMsg.toStdString());
-    }
-    
+// Helper method for card count queries
+int DataBase::getCardCount(int listID, const std::string& whereClause, const std::string& context) {
+    std::string sql = "SELECT COUNT(*) FROM review_schedule WHERE list_id = ? AND " + whereClause + ";";
+    sqlite3_stmt* stmt = prepareStatementOrThrow(sql.c_str(), context);
     sqlite3_bind_int(stmt, 1, listID);
     
     int count = 0;
@@ -1210,54 +1225,19 @@ int DataBase::getNewCardCount(int listID) {
     
     sqlite3_finalize(stmt);
     return count;
+}
+
+// Get count of new cards (never reviewed) for a list
+int DataBase::getNewCardCount(int listID) {
+    return getCardCount(listID, "repetition_count = 0", "getNewCardCount");
 }
 
 // Get count of continuing cards (already started but due for review)
 int DataBase::getContinuingCardCount(int listID) {
-    const char* sql = 
-        "SELECT COUNT(*) FROM review_schedule "
-        "WHERE list_id = ? AND repetition_count > 0 AND next_review_date <= datetime('now');";
-    
-    sqlite3_stmt* stmt = nullptr;
-    int rc = sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr);
-    if (rc != SQLITE_OK) {
-        QString errorMsg = "Failed to prepare statement for getContinuingCardCount: " + QString::fromStdString(std::string(sqlite3_errmsg(db)));
-        qCritical() << errorMsg;
-        throw std::runtime_error(errorMsg.toStdString());
-    }
-    
-    sqlite3_bind_int(stmt, 1, listID);
-    
-    int count = 0;
-    if (sqlite3_step(stmt) == SQLITE_ROW) {
-        count = sqlite3_column_int(stmt, 0);
-    }
-    
-    sqlite3_finalize(stmt);
-    return count;
+    return getCardCount(listID, "repetition_count > 0 AND next_review_date <= datetime('now')", "getContinuingCardCount");
 }
 
 // Get count of all cards due for review (new + continuing)
 int DataBase::getReviewCardCount(int listID) {
-    const char* sql = 
-        "SELECT COUNT(*) FROM review_schedule "
-        "WHERE list_id = ? AND next_review_date <= datetime('now');";
-    
-    sqlite3_stmt* stmt = nullptr;
-    int rc = sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr);
-    if (rc != SQLITE_OK) {
-        QString errorMsg = "Failed to prepare statement for getReviewCardCount: " + QString::fromStdString(std::string(sqlite3_errmsg(db)));
-        qCritical() << errorMsg;
-        throw std::runtime_error(errorMsg.toStdString());
-    }
-    
-    sqlite3_bind_int(stmt, 1, listID);
-    
-    int count = 0;
-    if (sqlite3_step(stmt) == SQLITE_ROW) {
-        count = sqlite3_column_int(stmt, 0);
-    }
-    
-    sqlite3_finalize(stmt);
-    return count;
+    return getCardCount(listID, "next_review_date <= datetime('now')", "getReviewCardCount");
 }
