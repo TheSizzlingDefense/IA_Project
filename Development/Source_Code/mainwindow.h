@@ -9,6 +9,9 @@
 #include <QPushButton>
 #include <vector>
 #include "spacedrepetitioncalculator.h"
+#include "decklistpanel.h"
+#include "modeselectorpanel.h"
+#include "studypanel.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -28,34 +31,20 @@ public:
 
 private slots:
     void on_addWord_clicked();
-
     void on_createDeck_clicked();
     void on_aiCreate_clicked();
-
-    void updatingList();
-    void startStudy();
-    void deckListDoubleClicked(QTableWidgetItem* item);
-    void on_startStudyButton_clicked();
     void on_listDecks_clicked();
     void on_showStats_clicked();
-    void on_viewAllButton_clicked();
-    void on_deleteListButton_clicked();
     void on_actionToggleDarkMode_triggered(bool checked);
     
-    // Study panel slots
-    void onReveal();
-    void onRateAgain();
-    void onRateHard();
-    void onRateGood();
-    void onRateEasy();
-    void onChoiceSelected();
-    void onSubmitTypedAnswer();
+    // Panel slots
+    void onDeckDoubleClicked(const QString& deckName, int listID);
+    void onStartStudy(int listID, int mode);
+    void onViewAll(int listID);
+    void onDeleteList(int listID);
+    void onStudyCompleted();
 
 private:
-    void loadDueCards();
-    void loadRandomPracticeCards();
-    void showCurrentCard();
-    void applyRating(int quality);
     void showDeckList();
     void showModePanel();
     void showStudyPanel();
@@ -65,21 +54,12 @@ private:
     Ui::MainWindow *ui;
 
     DataBase db;
-    // pending selection when opening mode panel
-    int pendingListID = -1;
-    QString pendingListName;
     
-    // Study session state
-    int currentStudyListID = -1;
-    std::vector<DataBase::DueCard> studyCards;
-    size_t currentCardIndex = 0;
-    enum class StudyMode { Flashcard, MultipleChoice, Typing } studyMode;
-    QPushButton* choiceButtons[4];
-    int correctChoiceIndex = -1;
-    bool isRandomPractice = false;
-    std::vector<int> recentlySeenWordIds; // Track recently seen words to avoid repetition
+    // Panel widgets
+    DeckListPanel* deckListPanel;
+    ModeSelectorPanel* modeSelectorPanel;
+    StudyPanel* studyPanel;
+    
     bool isDarkMode = false;
-    int typingAttempts = 0; // Track attempts in typing mode
-    bool showingExample = false; // Whether example is currently shown in typing mode
 };
 #endif // MAINWINDOW_H

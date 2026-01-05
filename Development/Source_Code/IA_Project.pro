@@ -15,6 +15,9 @@ SOURCES += \
     mainwindow.cpp \
     spacedrepetitioncalculator.cpp \
     aicreatewindow.cpp \
+    decklistpanel.cpp \
+    modeselectorpanel.cpp \
+    studypanel.cpp \
     sqlite3.c
 
 HEADERS += \
@@ -24,13 +27,19 @@ HEADERS += \
     mainwindow.h \
     spacedrepetitioncalculator.h \
     aicreatewindow.h \
+    decklistpanel.h \
+    modeselectorpanel.h \
+    studypanel.h \
     sqlite3.h
 
 FORMS += \
     addcardwindow.ui \
     addlistwindow.ui \
     mainwindow.ui \
-    aicreatewindow.ui
+    aicreatewindow.ui \
+    decklistpanel.ui \
+    modeselectorpanel.ui \
+    studypanel.ui
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin

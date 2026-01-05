@@ -13,17 +13,11 @@
     <height>697</height>
    </rect>
   </property>
-  <property name="minimumSize">
-   <size>
-    <width>0</width>
-    <height>0</height>
-   </size>
-  </property>
   <property name="windowTitle">
    <string>MainWindow</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <layout class="QVBoxLayout" name="verticalLayout_3">
+   <layout class="QVBoxLayout" name="verticalLayout_main">
     <property name="spacing">
      <number>15</number>
     </property>
@@ -40,372 +34,47 @@
      <number>20</number>
     </property>
     <item>
-     <layout class="QVBoxLayout" name="veretical_layout_top">
-      <item>
-       <layout class="QHBoxLayout" name="horizontal_layout_top">
-        <property name="spacing">
-         <number>10</number>
-        </property>
-        <item>
-         <spacer name="horizontal_spacer_top_left">
-          <property name="orientation">
-           <enum>Qt::Orientation::Horizontal</enum>
-          </property>
-          <property name="sizeHint" stdset="0">
-           <size>
-            <width>40</width>
-            <height>20</height>
-           </size>
-          </property>
-         </spacer>
-        </item>
-        <item alignment="Qt::AlignmentFlag::AlignTop">
-         <widget class="QPushButton" name="listDecks">
-          <property name="minimumSize">
-           <size>
-            <width>80</width>
-            <height>35</height>
-           </size>
-          </property>
-          <property name="font">
-           <font>
-            <pointsize>12</pointsize>
-           </font>
-          </property>
-          <property name="text">
-           <string>Decks</string>
-          </property>
-         </widget>
-        </item>
-        <item alignment="Qt::AlignmentFlag::AlignTop">
-         <widget class="QPushButton" name="addWord">
-          <property name="minimumSize">
-           <size>
-            <width>80</width>
-            <height>35</height>
-           </size>
-          </property>
-          <property name="font">
-           <font>
-            <pointsize>12</pointsize>
-           </font>
-          </property>
-          <property name="text">
-           <string>Add</string>
-          </property>
-         </widget>
-        </item>
-        <item alignment="Qt::AlignmentFlag::AlignTop">
-         <widget class="QPushButton" name="aiCreate">
-          <property name="minimumSize">
-           <size>
-            <width>100</width>
-            <height>35</height>
-           </size>
-          </property>
-          <property name="font">
-           <font>
-            <pointsize>12</pointsize>
-           </font>
-          </property>
-          <property name="text">
-           <string>AI Create</string>
-          </property>
-         </widget>
-        </item>
-        <item alignment="Qt::AlignmentFlag::AlignTop">
-         <widget class="QPushButton" name="showStats">
-          <property name="minimumSize">
-           <size>
-            <width>80</width>
-            <height>35</height>
-           </size>
-          </property>
-          <property name="font">
-           <font>
-            <pointsize>12</pointsize>
-           </font>
-          </property>
-          <property name="text">
-           <string>Stats</string>
-          </property>
-         </widget>
-        </item>
-        <item alignment="Qt::AlignmentFlag::AlignTop">
-         <widget class="QPushButton" name="syncWords">
-          <property name="minimumSize">
-           <size>
-            <width>80</width>
-            <height>35</height>
-           </size>
-          </property>
-          <property name="font">
-           <font>
-            <pointsize>12</pointsize>
-           </font>
-          </property>
-          <property name="text">
-           <string>Sync</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <spacer name="horizontal_spacer_top_right">
-          <property name="orientation">
-           <enum>Qt::Orientation::Horizontal</enum>
-          </property>
-          <property name="sizeHint" stdset="0">
-           <size>
-            <width>40</width>
-            <height>20</height>
-           </size>
-          </property>
-         </spacer>
-        </item>
-       </layout>
-      </item>
-     </layout>
-    </item>
-    <item>
-     <spacer name="vertical_spacer_top">
-      <property name="orientation">
-       <enum>Qt::Orientation::Vertical</enum>
-      </property>
-      <property name="sizeType">
-       <enum>QSizePolicy::Policy::Minimum</enum>
-      </property>
-      <property name="sizeHint" stdset="0">
-       <size>
-        <width>20</width>
-        <height>40</height>
-       </size>
-      </property>
-     </spacer>
-    </item>
-    <item>
-     <layout class="QHBoxLayout" name="horizontal_layout_middle">
-      <item>
-       <spacer name="horizontal_spacer_middle_left">
-        <property name="orientation">
-         <enum>Qt::Orientation::Horizontal</enum>
-        </property>
-        <property name="sizeHint" stdset="0">
-         <size>
-          <width>40</width>
-          <height>20</height>
-         </size>
-        </property>
-       </spacer>
-      </item>
-      <item>
-       <widget class="QTableWidget" name="deckList">
-        <property name="minimumSize">
-         <size>
-          <width>500</width>
-          <height>150</height>
-         </size>
-        </property>
-        <property name="maximumSize">
-         <size>
-          <width>16777215</width>
-          <height>250</height>
-         </size>
-        </property>
-        <property name="font">
-         <font>
-          <pointsize>12</pointsize>
-         </font>
-        </property>
-        <property name="editTriggers">
-         <set>QAbstractItemView::EditTrigger::NoEditTriggers</set>
-        </property>
-        <property name="selectionMode">
-         <enum>QAbstractItemView::SelectionMode::SingleSelection</enum>
-        </property>
-        <property name="selectionBehavior">
-         <enum>QAbstractItemView::SelectionBehavior::SelectRows</enum>
-        </property>
-        <column>
-         <property name="text">
-          <string>Deck Name</string>
-         </property>
-        </column>
-        <column>
-         <property name="text">
-          <string>New</string>
-         </property>
-        </column>
-        <column>
-         <property name="text">
-          <string>Due</string>
-         </property>
-        </column>
-        <column>
-         <property name="text">
-          <string>Review</string>
-         </property>
-        </column>
-       </widget>
-      </item>
-      <item>
-       <spacer name="horizontal_spacer_middle_right">
-        <property name="orientation">
-         <enum>Qt::Orientation::Horizontal</enum>
-        </property>
-        <property name="sizeHint" stdset="0">
-         <size>
-          <width>40</width>
-          <height>20</height>
-         </size>
-        </property>
-       </spacer>
-      </item>
-     </layout>
-    </item>
-    <item>
-     <layout class="QVBoxLayout" name="modePanelLayout">
+     <layout class="QHBoxLayout" name="topButtonsLayout">
       <property name="spacing">
-       <number>15</number>
+       <number>10</number>
       </property>
       <item>
-       <widget class="QLabel" name="selectedDeckLabel">
-        <property name="font">
-         <font>
-          <pointsize>14</pointsize>
-          <bold>true</bold>
-         </font>
+       <spacer name="horizontalSpacer_left">
+        <property name="orientation">
+         <enum>Qt::Orientation::Horizontal</enum>
         </property>
-        <property name="text">
-         <string>Selected Deck</string>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>40</width>
+          <height>20</height>
+         </size>
         </property>
-        <property name="alignment">
-         <set>Qt::AlignmentFlag::AlignCenter</set>
-        </property>
-       </widget>
+       </spacer>
       </item>
       <item>
-       <widget class="QComboBox" name="studyModeComboBox">
+       <widget class="QPushButton" name="listDecks">
         <property name="minimumSize">
          <size>
-          <width>0</width>
+          <width>80</width>
           <height>35</height>
          </size>
         </property>
         <property name="font">
          <font>
-          <pointsize>11</pointsize>
+          <pointsize>12</pointsize>
          </font>
         </property>
-        <item>
-         <property name="text">
-          <string>Flashcard</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>Multiple Choice</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>Typing</string>
-         </property>
-        </item>
-       </widget>
-      </item>
-      <item>
-       <layout class="QHBoxLayout" name="modeButtonsLayout">
-        <property name="spacing">
-         <number>10</number>
-        </property>
-        <item>
-         <widget class="QPushButton" name="startStudyButton">
-          <property name="minimumSize">
-           <size>
-            <width>0</width>
-            <height>40</height>
-           </size>
-          </property>
-          <property name="font">
-           <font>
-            <pointsize>11</pointsize>
-           </font>
-          </property>
-          <property name="text">
-           <string>Start Study</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QPushButton" name="viewAllButton">
-          <property name="minimumSize">
-           <size>
-            <width>0</width>
-            <height>40</height>
-           </size>
-          </property>
-          <property name="font">
-           <font>
-            <pointsize>11</pointsize>
-           </font>
-          </property>
-          <property name="text">
-           <string>View All</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QPushButton" name="deleteListButton">
-          <property name="minimumSize">
-           <size>
-            <width>0</width>
-            <height>40</height>
-           </size>
-          </property>
-          <property name="font">
-           <font>
-            <pointsize>11</pointsize>
-           </font>
-          </property>
-          <property name="text">
-           <string>Delete List</string>
-          </property>
-         </widget>
-        </item>
-       </layout>
-      </item>
-     </layout>
-    </item>
-    <item>
-     <layout class="QVBoxLayout" name="studyPanelLayout">
-      <property name="spacing">
-       <number>20</number>
-      </property>
-      <item>
-       <widget class="QLabel" name="studyWordLabel">
-        <property name="minimumSize">
-         <size>
-          <width>0</width>
-          <height>60</height>
-         </size>
-        </property>
-        <property name="styleSheet">
-         <string>font-size: 20pt; font-weight: bold;</string>
-        </property>
         <property name="text">
-         <string>Word</string>
-        </property>
-        <property name="alignment">
-         <set>Qt::AlignmentFlag::AlignCenter</set>
+         <string>Decks</string>
         </property>
        </widget>
       </item>
       <item>
-       <widget class="QPushButton" name="revealButton">
+       <widget class="QPushButton" name="addWord">
         <property name="minimumSize">
          <size>
-          <width>0</width>
-          <height>45</height>
+          <width>80</width>
+          <height>35</height>
          </size>
         </property>
         <property name="font">
@@ -414,347 +83,227 @@
          </font>
         </property>
         <property name="text">
-         <string>Reveal</string>
+         <string>Add</string>
         </property>
        </widget>
       </item>
       <item>
-       <widget class="QLabel" name="studyDefinitionLabel">
+       <widget class="QPushButton" name="aiCreate">
         <property name="minimumSize">
          <size>
-          <width>0</width>
-          <height>80</height>
+          <width>80</width>
+          <height>35</height>
          </size>
         </property>
-        <property name="visible">
-         <bool>false</bool>
-        </property>
-        <property name="styleSheet">
-         <string>font-size: 14pt; padding: 10px; border-radius: 5px;</string>
+        <property name="font">
+         <font>
+          <pointsize>12</pointsize>
+         </font>
         </property>
         <property name="text">
-         <string>Definition</string>
-        </property>
-        <property name="alignment">
-         <set>Qt::AlignmentFlag::AlignCenter</set>
-        </property>
-        <property name="wordWrap">
-         <bool>true</bool>
+         <string>AI Create</string>
         </property>
        </widget>
       </item>
       <item>
-       <widget class="QGroupBox" name="additionalInfoBox">
-        <property name="title">
-         <string>Additional Information</string>
+       <widget class="QPushButton" name="showStats">
+        <property name="minimumSize">
+         <size>
+          <width>80</width>
+          <height>35</height>
+         </size>
         </property>
-        <layout class="QVBoxLayout" name="additionalInfoLayout">
-         <item>
-          <widget class="QLabel" name="examplesLabel">
-           <property name="font">
-            <font>
-             <bold>true</bold>
-            </font>
-           </property>
-           <property name="text">
-            <string>Examples:</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QLabel" name="examplesText">
-           <property name="text">
-            <string>No examples available</string>
-           </property>
-           <property name="alignment">
-            <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignTop</set>
-           </property>
-           <property name="wordWrap">
-            <bool>true</bool>
-           </property>
-           <property name="textInteractionFlags">
-            <set>Qt::TextInteractionFlag::TextSelectableByMouse</set>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QLabel" name="relationsLabel">
-           <property name="font">
-            <font>
-             <bold>true</bold>
-            </font>
-           </property>
-           <property name="text">
-            <string>Word Relations:</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QLabel" name="relationsText">
-           <property name="text">
-            <string>No word relations available</string>
-           </property>
-           <property name="alignment">
-            <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignTop</set>
-           </property>
-           <property name="wordWrap">
-            <bool>true</bool>
-           </property>
-           <property name="textInteractionFlags">
-            <set>Qt::TextInteractionFlag::TextSelectableByMouse</set>
-           </property>
-          </widget>
-         </item>
-        </layout>
+        <property name="font">
+         <font>
+          <pointsize>12</pointsize>
+         </font>
+        </property>
+        <property name="text">
+         <string>Stats</string>
+        </property>
        </widget>
       </item>
       <item>
-       <layout class="QVBoxLayout" name="typingLayout">
-        <item>
-         <widget class="QLabel" name="typingPromptLabel">
-          <property name="font">
-           <font>
-            <pointsize>12</pointsize>
-           </font>
-          </property>
-          <property name="text">
-           <string>Type the definition:</string>
-          </property>
-          <property name="alignment">
-           <set>Qt::AlignmentFlag::AlignCenter</set>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QLineEdit" name="typingInput">
-          <property name="minimumSize">
-           <size>
-            <width>0</width>
-            <height>40</height>
-           </size>
-          </property>
-          <property name="font">
-           <font>
-            <pointsize>12</pointsize>
-           </font>
-          </property>
-          <property name="placeholderText">
-           <string>Type your answer here...</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QPushButton" name="submitTypingButton">
-          <property name="minimumSize">
-           <size>
-            <width>0</width>
-            <height>40</height>
-           </size>
-          </property>
-          <property name="font">
-           <font>
-            <pointsize>11</pointsize>
-           </font>
-          </property>
-          <property name="text">
-           <string>Submit</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QLabel" name="typingFeedbackLabel">
-          <property name="font">
-           <font>
-            <pointsize>11</pointsize>
-            <bold>true</bold>
-           </font>
-          </property>
-          <property name="text">
-           <string/>
-          </property>
-          <property name="alignment">
-           <set>Qt::AlignmentFlag::AlignCenter</set>
-          </property>
-          <property name="wordWrap">
-           <bool>true</bool>
-          </property>
-         </widget>
-        </item>
-       </layout>
-      </item>
-      <item>
-       <layout class="QGridLayout" name="choicesGrid">
-        <item row="0" column="0">
-         <widget class="QPushButton" name="choiceButton1">
-          <property name="minimumSize">
-           <size>
-            <width>0</width>
-            <height>50</height>
-           </size>
-          </property>
-          <property name="font">
-           <font>
-            <pointsize>11</pointsize>
-           </font>
-          </property>
-          <property name="visible">
-           <bool>false</bool>
-          </property>
-          <property name="text">
-           <string>Choice 1</string>
-          </property>
-         </widget>
-        </item>
-        <item row="0" column="1">
-         <widget class="QPushButton" name="choiceButton2">
-          <property name="minimumSize">
-           <size>
-            <width>0</width>
-            <height>50</height>
-           </size>
-          </property>
-          <property name="font">
-           <font>
-            <pointsize>11</pointsize>
-           </font>
-          </property>
-          <property name="visible">
-           <bool>false</bool>
-          </property>
-          <property name="text">
-           <string>Choice 2</string>
-          </property>
-         </widget>
-        </item>
-        <item row="1" column="0">
-         <widget class="QPushButton" name="choiceButton3">
-          <property name="minimumSize">
-           <size>
-            <width>0</width>
-            <height>50</height>
-           </size>
-          </property>
-          <property name="font">
-           <font>
-            <pointsize>11</pointsize>
-           </font>
-          </property>
-          <property name="visible">
-           <bool>false</bool>
-          </property>
-          <property name="text">
-           <string>Choice 3</string>
-          </property>
-         </widget>
-        </item>
-        <item row="1" column="1">
-         <widget class="QPushButton" name="choiceButton4">
-          <property name="minimumSize">
-           <size>
-            <width>0</width>
-            <height>50</height>
-           </size>
-          </property>
-          <property name="font">
-           <font>
-            <pointsize>11</pointsize>
-           </font>
-          </property>
-          <property name="visible">
-           <bool>false</bool>
-          </property>
-          <property name="text">
-           <string>Choice 4</string>
-          </property>
-         </widget>
-        </item>
-       </layout>
-      </item>
-      <item>
-       <layout class="QHBoxLayout" name="studyButtonLayout">
-        <property name="spacing">
-         <number>10</number>
+       <spacer name="horizontalSpacer_right">
+        <property name="orientation">
+         <enum>Qt::Orientation::Horizontal</enum>
         </property>
-        <item>
-         <widget class="QPushButton" name="againButton">
-          <property name="minimumSize">
-           <size>
-            <width>0</width>
-            <height>45</height>
-           </size>
-          </property>
-          <property name="font">
-           <font>
-            <pointsize>11</pointsize>
-           </font>
-          </property>
-          <property name="text">
-           <string>Again</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QPushButton" name="hardButton">
-          <property name="minimumSize">
-           <size>
-            <width>0</width>
-            <height>45</height>
-           </size>
-          </property>
-          <property name="font">
-           <font>
-            <pointsize>11</pointsize>
-           </font>
-          </property>
-          <property name="text">
-           <string>Hard</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QPushButton" name="goodButton">
-          <property name="minimumSize">
-           <size>
-            <width>0</width>
-            <height>45</height>
-           </size>
-          </property>
-          <property name="font">
-           <font>
-            <pointsize>11</pointsize>
-           </font>
-          </property>
-          <property name="text">
-           <string>Good</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QPushButton" name="easyButton">
-          <property name="minimumSize">
-           <size>
-            <width>0</width>
-            <height>45</height>
-           </size>
-          </property>
-          <property name="font">
-           <font>
-            <pointsize>11</pointsize>
-           </font>
-          </property>
-          <property name="text">
-           <string>Easy</string>
-          </property>
-         </widget>
-        </item>
-       </layout>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>40</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
       </item>
      </layout>
     </item>
     <item>
-     <spacer name="vertical_spacer_bottom">
+     <layout class="QHBoxLayout" name="deckListHorizontalLayout">
+      <item>
+       <spacer name="deckListLeftSpacer">
+        <property name="orientation">
+         <enum>Qt::Orientation::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>40</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item>
+       <widget class="QWidget" name="deckListContainer" native="true">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Expanding" vsizetype="Minimum">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <layout class="QVBoxLayout" name="deckListLayout">
+         <property name="spacing">
+          <number>0</number>
+         </property>
+         <property name="leftMargin">
+          <number>0</number>
+         </property>
+         <property name="topMargin">
+          <number>0</number>
+         </property>
+         <property name="rightMargin">
+          <number>0</number>
+         </property>
+         <property name="bottomMargin">
+          <number>0</number>
+         </property>
+        </layout>
+       </widget>
+      </item>
+      <item>
+       <spacer name="deckListRightSpacer">
+        <property name="orientation">
+         <enum>Qt::Orientation::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>40</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+     </layout>
+    </item>
+    <item>
+     <layout class="QHBoxLayout" name="modeSelectorHorizontalLayout">
+      <item>
+       <spacer name="modeSelectorLeftSpacer">
+        <property name="orientation">
+         <enum>Qt::Orientation::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>40</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item>
+       <widget class="QWidget" name="modeSelectorContainer" native="true">
+        <layout class="QVBoxLayout" name="modeSelectorLayout">
+         <property name="spacing">
+          <number>0</number>
+         </property>
+         <property name="leftMargin">
+          <number>0</number>
+         </property>
+         <property name="topMargin">
+          <number>0</number>
+         </property>
+         <property name="rightMargin">
+          <number>0</number>
+         </property>
+         <property name="bottomMargin">
+          <number>0</number>
+         </property>
+        </layout>
+       </widget>
+      </item>
+      <item>
+       <spacer name="modeSelectorRightSpacer">
+        <property name="orientation">
+         <enum>Qt::Orientation::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>40</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+     </layout>
+    </item>
+    <item>
+     <layout class="QHBoxLayout" name="studyPanelHorizontalLayout">
+      <item>
+       <spacer name="studyPanelLeftSpacer">
+        <property name="orientation">
+         <enum>Qt::Orientation::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>40</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item>
+       <widget class="QWidget" name="studyPanelContainer" native="true">
+        <layout class="QVBoxLayout" name="studyPanelLayoutContainer">
+         <property name="spacing">
+          <number>0</number>
+         </property>
+         <property name="leftMargin">
+          <number>0</number>
+         </property>
+         <property name="topMargin">
+          <number>0</number>
+         </property>
+         <property name="rightMargin">
+          <number>0</number>
+         </property>
+         <property name="bottomMargin">
+          <number>0</number>
+         </property>
+        </layout>
+       </widget>
+      </item>
+      <item>
+       <spacer name="studyPanelRightSpacer">
+        <property name="orientation">
+         <enum>Qt::Orientation::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>40</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+     </layout>
+    </item>
+    <item>
+     <spacer name="verticalSpacer">
       <property name="orientation">
        <enum>Qt::Orientation::Vertical</enum>
+      </property>
+      <property name="sizeType">
+       <enum>QSizePolicy::Expanding</enum>
       </property>
       <property name="sizeHint" stdset="0">
        <size>
@@ -765,9 +314,9 @@
      </spacer>
     </item>
     <item>
-     <layout class="QHBoxLayout" name="horizontal_layout_bottom">
+     <layout class="QHBoxLayout" name="bottomLayout">
       <item>
-       <spacer name="horizontal_spacer_bottom_right">
+       <spacer name="horizontalSpacer_bottom_left">
         <property name="orientation">
          <enum>Qt::Orientation::Horizontal</enum>
         </property>
@@ -798,7 +347,7 @@
        </widget>
       </item>
       <item>
-       <spacer name="horizontal_spacer_bottom_left">
+       <spacer name="horizontalSpacer_bottom_right">
         <property name="orientation">
          <enum>Qt::Orientation::Horizontal</enum>
         </property>
@@ -823,7 +372,7 @@
      <height>22</height>
     </rect>
    </property>
-   <widget class="QMenu" name="menuColl_app">
+   <widget class="QMenu" name="menuFile">
     <property name="title">
      <string>File</string>
     </property>
@@ -844,7 +393,7 @@
      <string>Tools</string>
     </property>
    </widget>
-   <addaction name="menuColl_app"/>
+   <addaction name="menuFile"/>
    <addaction name="menuEdit"/>
    <addaction name="menuView"/>
    <addaction name="menuTools"/>
