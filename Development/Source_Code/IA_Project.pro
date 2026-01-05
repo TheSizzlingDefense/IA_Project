@@ -15,10 +15,10 @@ SOURCES += \
     mainwindow.cpp \
     spacedrepetitioncalculator.cpp \
     aicreatewindow.cpp \
+    sqlite3.c \
     decklistpanel.cpp \
     modeselectorpanel.cpp \
-    studypanel.cpp \
-    sqlite3.c
+    studypanel.cpp
 
 HEADERS += \
     addcardwindow.h \
@@ -27,10 +27,10 @@ HEADERS += \
     mainwindow.h \
     spacedrepetitioncalculator.h \
     aicreatewindow.h \
+    sqlite3.h \
     decklistpanel.h \
     modeselectorpanel.h \
-    studypanel.h \
-    sqlite3.h
+    studypanel.h
 
 FORMS += \
     addcardwindow.ui \
