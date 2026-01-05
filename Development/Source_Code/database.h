@@ -29,8 +29,6 @@ public:
 
     bool createExampleTable();
 
-    bool createListProgressTable();
-
     bool createWordRelationTable();
 
     // Transaction helpers
@@ -45,7 +43,6 @@ public:
     // returns true if a new membership row was inserted (false if it already existed)
     bool addWordToList(int listID, int wordID);
     bool initReviewSchedule(int wordID, int listID);
-    bool incrementListProgress(int listID, int delta = 1);
 
     // High-level convenience: add a word to a list and initialize related rows.
     // Returns the word_id on success, or -1 on error (throws on DB errors).

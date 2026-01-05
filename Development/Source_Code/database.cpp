@@ -21,7 +21,6 @@ DataBase::DataBase(const std::string& dbPath) {
     createStudySessionTable();
     createReviewScheduleTable();
     createExampleTable();
-    createListProgressTable();
     createWordRelationTable();
 }
 
@@ -163,12 +162,9 @@ bool DataBase::createStudySessionTable() {
         "word_id INTEGER NOT NULL, "
         "review_date DATETIME NOT NULL, "
         "was_correct BOOLEAN NOT NULL, "
-        "response_time INTEGER, "
         "confidence_score INTEGER CHECK (confidence_score BETWEEN 1 AND 5), "
         "study_mode TEXT CHECK (study_mode IN ('flashcard', 'multiple_choice', 'typing', 'listen')), "
         "list_id INTEGER, "
-        "notes TEXT, "
-        "device_info TEXT, "
         "FOREIGN KEY (word_id) REFERENCES words(word_id) "
         ");";
 
@@ -280,20 +276,6 @@ std::string DataBase::getStudySessionSummary() {
     }
     sqlite3_finalize(stmt);
 
-    const char* avgRespSql = "SELECT AVG(response_time) FROM study_sessions WHERE response_time IS NOT NULL;";
-    rc = sqlite3_prepare_v2(db, avgRespSql, -1, &stmt, nullptr);
-    double avgResp = 0.0;
-    bool hasAvgResp = false;
-    if (rc == SQLITE_OK) {
-        if (sqlite3_step(stmt) == SQLITE_ROW) {
-            if (sqlite3_column_type(stmt,0) != SQLITE_NULL) {
-                avgResp = sqlite3_column_double(stmt, 0);
-                hasAvgResp = true;
-            }
-        }
-    }
-    sqlite3_finalize(stmt);
-
     const char* avgConfSql = "SELECT AVG(confidence_score) FROM study_sessions WHERE confidence_score IS NOT NULL;";
     rc = sqlite3_prepare_v2(db, avgConfSql, -1, &stmt, nullptr);
     double avgConf = 0.0;
@@ -315,7 +297,6 @@ std::string DataBase::getStudySessionSummary() {
         double pct = (100.0 * static_cast<double>(correct)) / static_cast<double>(total);
         out << "Percent correct: " << std::round(pct * 100.0) / 100.0 << "%\n";
     }
-    if (hasAvgResp) out << "Average response time (s): " << std::round(avgResp * 100.0) / 100.0 << "\n";
     if (hasAvgConf) out << "Average confidence (1-5): " << std::round(avgConf * 100.0) / 100.0 << "\n";
 
     // breakdown by study_mode
@@ -332,46 +313,6 @@ std::string DataBase::getStudySessionSummary() {
     sqlite3_finalize(stmt);
 
     return out.str();
-}
-
-bool DataBase::createListProgressTable() {
-    const char* sql =
-        "CREATE TABLE IF NOT EXISTS progress_list ( "
-        "progress_id INTEGER PRIMARY KEY, "
-        "list_id INTEGER NOT NULL, "
-        "words_mastered INTEGER NOT NULL DEFAULT 0, "
-        "total_words INTEGER NOT NULL DEFAULT 0, "
-        "last_studied DATETIME, "
-        "overall_accuracy REAL CHECK (overall_accuracy BETWEEN 0.0 AND 1.0), "
-        "total_study_time INTEGER NOT NULL DEFAULT 0, "
-        "days_streak INTEGER NOT NULL DEFAULT 0, "
-        "current_streak INTEGER NOT NULL DEFAULT 0, "
-        "best_streak INTEGER NOT NULL DEFAULT 0, "
-        "FOREIGN KEY (list_id) REFERENCES vocabulary_lists(list_id)"
-        ");";
-
-    char* errorMessage = nullptr;
-    int result = sqlite3_exec(db, sql, nullptr, nullptr, &errorMessage);
-    if (result != SQLITE_OK) {
-        QString error = "Failed to create progress_list table: " + QString::fromUtf8(errorMessage ? errorMessage : "");
-        qCritical() << error;
-        sqlite3_free(errorMessage);
-        throw std::runtime_error(error.toStdString());
-    }
-
-    const char* indexSql =
-        "CREATE INDEX IF NOT EXISTS idx_list_progress_list_id ON progress_list(list_id); "
-        "CREATE INDEX IF NOT EXISTS idx_list_progress_last_studied ON progress_list(last_studied);";
-
-    result = sqlite3_exec(db,indexSql, nullptr, nullptr, &errorMessage);
-    if (result != SQLITE_OK) {
-        QString error = "Failed to create index on progress_list: " + QString::fromUtf8(errorMessage ? errorMessage : "");
-        qCritical() << error;
-        sqlite3_free(errorMessage);
-        throw std::runtime_error(error.toStdString());
-    }
-
-    return true;
 }
 
 bool DataBase::createWordRelationTable() {
@@ -464,25 +405,6 @@ bool DataBase::deleteList(int listID) {
         if (result != SQLITE_DONE) {
             rollbackTransaction();
             QString errorMsg = "Failed to delete from review_schedule: " + QString::fromStdString(std::string(sqlite3_errmsg(db)));
-            qCritical() << errorMsg;
-            throw std::runtime_error(errorMsg.toStdString());
-        }
-
-        // Delete from progress_list (no CASCADE)
-        const char* delProgressSql = "DELETE FROM progress_list WHERE list_id = ?;";
-        result = sqlite3_prepare_v2(db, delProgressSql, -1, &stmt, nullptr);
-        if (result != SQLITE_OK) {
-            rollbackTransaction();
-            QString errorMsg = "Failed to prepare progress_list delete: " + QString::fromStdString(std::string(sqlite3_errmsg(db)));
-            qCritical() << errorMsg;
-            throw std::runtime_error(errorMsg.toStdString());
-        }
-        sqlite3_bind_int(stmt, 1, listID);
-        result = sqlite3_step(stmt);
-        sqlite3_finalize(stmt);
-        if (result != SQLITE_DONE) {
-            rollbackTransaction();
-            QString errorMsg = "Failed to delete from progress_list: " + QString::fromStdString(std::string(sqlite3_errmsg(db)));
             qCritical() << errorMsg;
             throw std::runtime_error(errorMsg.toStdString());
         }
@@ -905,58 +827,6 @@ bool DataBase::initReviewSchedule(int wordID, int listID) {
     return true;
 }
 
-bool DataBase::incrementListProgress(int listID, int delta) {
-    const char* updateSql = "UPDATE progress_list SET total_words = total_words + ? WHERE list_id = ?;";
-    sqlite3_stmt* stmt = nullptr;
-    int rc = sqlite3_prepare_v2(db, updateSql, -1, &stmt, nullptr);
-    if (rc != SQLITE_OK) {
-        QString errorMsg = "Failed to prepare statement for incrementListProgress UPDATE: " + QString::fromStdString(std::string(sqlite3_errmsg(db)));
-        qCritical() << errorMsg;
-        throw std::runtime_error(errorMsg.toStdString());
-    }
-
-    sqlite3_bind_int(stmt, 1, delta);
-    sqlite3_bind_int(stmt, 2, listID);
-
-    rc = sqlite3_step(stmt);
-    if (rc != SQLITE_DONE && rc != SQLITE_ROW) {
-        sqlite3_finalize(stmt);
-        QString errorMsg = "Execution failed for incrementListProgress UPDATE: " + QString::fromStdString(std::string(sqlite3_errmsg(db)));
-        qCritical() << errorMsg;
-        throw std::runtime_error(errorMsg.toStdString());
-    }
-
-    sqlite3_finalize(stmt);
-
-    int changes = sqlite3_changes(db);
-    if (changes == 0) {
-        // No existing row; insert a new progress row
-        const char* insertSql = "INSERT INTO progress_list (list_id, total_words, words_mastered) VALUES (?, ?, 0);";
-        sqlite3_stmt* istmt = nullptr;
-        rc = sqlite3_prepare_v2(db, insertSql, -1, &istmt, nullptr);
-        if (rc != SQLITE_OK) {
-            QString errorMsg = "Failed to prepare statement for incrementListProgress INSERT: " + QString::fromStdString(std::string(sqlite3_errmsg(db)));
-            qCritical() << errorMsg;
-            throw std::runtime_error(errorMsg.toStdString());
-        }
-
-        sqlite3_bind_int(istmt, 1, listID);
-        sqlite3_bind_int(istmt, 2, delta);
-
-        rc = sqlite3_step(istmt);
-        if (rc != SQLITE_DONE) {
-            sqlite3_finalize(istmt);
-            QString errorMsg = "Execution failed for incrementListProgress INSERT: " + QString::fromStdString(std::string(sqlite3_errmsg(db)));
-            qCritical() << errorMsg;
-            throw std::runtime_error(errorMsg.toStdString());
-        }
-
-        sqlite3_finalize(istmt);
-    }
-
-    return true;
-}
-
 int DataBase::addWordAndSetup(int listID, const std::string& word, const std::string& partOfSpeech, const std::string& definition, const std::string& language) {
     try {
         beginTransaction();
@@ -973,11 +843,6 @@ int DataBase::addWordAndSetup(int listID, const std::string& word, const std::st
 
         // Initialize review schedule regardless (INSERT OR IGNORE inside)
         initReviewSchedule(wordID, listID);
-
-        // Only increment progress when a new membership row was inserted
-        if (inserted) {
-            incrementListProgress(listID, 1);
-        }
 
         commitTransaction();
         return wordID;
@@ -1067,7 +932,7 @@ bool DataBase::updateReviewScheduleForWord(int wordID, int listID, int repetitio
 }
 
 bool DataBase::recordStudySession(int wordID, int listID, bool was_correct, int quality, const std::string& study_mode) {
-    const char* sql = "INSERT INTO study_sessions (word_id, review_date, was_correct, response_time, confidence_score, study_mode, list_id, notes, device_info) VALUES (?, datetime('now'), ?, ?, ?, ?, ?, ?, ?);";
+    const char* sql = "INSERT INTO study_sessions (word_id, review_date, was_correct, confidence_score, study_mode, list_id) VALUES (?, datetime('now'), ?, ?, ?, ?);"; 
     sqlite3_stmt* stmt = nullptr;
     int rc = sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr);
     if (rc != SQLITE_OK) {
@@ -1078,16 +943,13 @@ bool DataBase::recordStudySession(int wordID, int listID, bool was_correct, int 
 
     sqlite3_bind_int(stmt, 1, wordID);
     sqlite3_bind_int(stmt, 2, was_correct ? 1 : 0);
-    sqlite3_bind_int(stmt, 3, 0); // response_time unknown
     // confidence_score must be between 1 and 5 (CHECK constraint). Clamp the provided quality.
     int confScore = quality;
     if (confScore < 1) confScore = 1;
     if (confScore > 5) confScore = 5;
-    sqlite3_bind_int(stmt, 4, confScore);
-    sqlite3_bind_text(stmt, 5, study_mode.c_str(), -1, SQLITE_TRANSIENT);
-    sqlite3_bind_int(stmt, 6, listID);
-    sqlite3_bind_text(stmt, 7, "", -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 8, "", -1, SQLITE_TRANSIENT);
+    sqlite3_bind_int(stmt, 3, confScore);
+    sqlite3_bind_text(stmt, 4, study_mode.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_int(stmt, 5, listID);
 
     rc = sqlite3_step(stmt);
     if (rc != SQLITE_DONE) {
