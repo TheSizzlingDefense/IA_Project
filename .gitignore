@@ -82,3 +82,4 @@ CMakeLists.txt.user*
 /build*/
 .vscode/c_cpp_properties.json
 Development/Source_Code/IA_Project
+Development/Source_Code/build
