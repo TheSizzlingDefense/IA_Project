@@ -36,6 +36,7 @@ private slots:
     void on_listDecks_clicked();
     void on_showStats_clicked();
     void on_actionToggleDarkMode_triggered(bool checked);
+    void on_actionImport_triggered();
     
     // Panel slots
     void onDeckDoubleClicked(const QString& deckName, int listID);
@@ -51,6 +52,9 @@ private:
     void applyLightTheme();
     void applyDarkTheme();
     void showTextDialog(const QString& title, const QString& text, int width = 480, int height = 320);
+    void importFromCSV(const QString& filePath, int listID);
+    void importFromDB(const QString& filePath, int listID);
+    void processCSVLine(const QString& line, QChar delimiter, int listID, int lineNumber);
     
     Ui::MainWindow *ui;
 

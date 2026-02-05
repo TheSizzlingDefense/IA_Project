@@ -9,6 +9,13 @@
 #include <QTextEdit>
 #include <QPushButton>
 #include <QMessageBox>
+#include <QFileDialog>
+#include <QInputDialog>
+#include <QFile>
+#include <QTextStream>
+#include <QTableWidget>
+#include <QTableWidgetItem>
+#include <QHeaderView>
 #include <sstream>
 #include <random>
 #include <algorithm>
@@ -129,6 +136,11 @@ void MainWindow::onStartStudy(int listID, int mode) {
         }
     } else {
         studyPanel->setRandomPracticeMode(false);
+        
+        // Shuffle the due cards
+        std::random_device rd;
+        std::mt19937 g(rd());
+        std::shuffle(cards.begin(), cards.end(), g);
     }
     
     // Set study mode
@@ -150,20 +162,64 @@ void MainWindow::onViewAll(int listID) {
     // Get list name from mode selector panel
     QString listName = modeSelectorPanel->getCurrentDeckName();
     
-    // Fetch all words for the list and display them
+    // Fetch all words for the list and display them in a table
     auto entries = db.getWordsInList(listID);
-    std::ostringstream out;
-    out << "Words in list: " << listName.toStdString() << "\n\n";
+    
+    // Create a dialog with a table widget
+    QDialog dlg(this);
+    dlg.setWindowTitle("All Words - " + listName);
+    dlg.setStyleSheet(isDarkMode ? ThemeUtils::getDarkTheme() : ThemeUtils::getLightTheme());
+    dlg.resize(900, 500);
+    
+    QVBoxLayout* layout = new QVBoxLayout(&dlg);
+    
+    // Create table widget
+    QTableWidget* table = new QTableWidget(&dlg);
+    table->setColumnCount(3);
+    table->setHorizontalHeaderLabels({"#", "Word", "Definition"});
+    table->setRowCount(entries.size());
+    table->horizontalHeader()->setStretchLastSection(true);
+    table->setSelectionBehavior(QAbstractItemView::SelectRows);
+    table->setSelectionMode(QAbstractItemView::SingleSelection);
+    table->setAlternatingRowColors(true);
+    
+    // Populate table
+    int rowNum = 0;
     for (const auto &t : entries) {
         int wid;
         std::string word, def;
         std::tie(wid, word, def) = t;
-        out << "- " << word;
-        if (!def.empty()) out << ": " << def;
-        out << "\n";
+        
+        // Word number (1-indexed)
+        QTableWidgetItem* numItem = new QTableWidgetItem(QString::number(rowNum + 1));
+        numItem->setFlags(numItem->flags() & ~Qt::ItemIsEditable);
+        table->setItem(rowNum, 0, numItem);
+        
+        // Word
+        QTableWidgetItem* wordItem = new QTableWidgetItem(QString::fromStdString(word));
+        wordItem->setFlags(wordItem->flags() & ~Qt::ItemIsEditable);
+        table->setItem(rowNum, 1, wordItem);
+        
+        // Definition
+        QTableWidgetItem* defItem = new QTableWidgetItem(QString::fromStdString(def));
+        defItem->setFlags(defItem->flags() & ~Qt::ItemIsEditable);
+        table->setItem(rowNum, 2, defItem);
+        
+        rowNum++;
     }
-
-    showTextDialog("All Words", QString::fromStdString(out.str()), 520, 400);
+    
+    // Resize columns to content
+    table->resizeColumnsToContents();
+    table->setColumnWidth(0, 50);
+    
+    layout->addWidget(table);
+    
+    // Add close button
+    QPushButton* closeBtn = new QPushButton("Close", &dlg);
+    QObject::connect(closeBtn, &QPushButton::clicked, &dlg, &QDialog::accept);
+    layout->addWidget(closeBtn);
+    
+    dlg.exec();
 }
 
 void MainWindow::onDeleteList(int listID) {
@@ -269,4 +325,238 @@ void MainWindow::showTextDialog(const QString& title, const QString& text, int w
     layout->addWidget(closeBtn);
     dlg.resize(width, height);
     dlg.exec();
+}
+void MainWindow::on_actionImport_triggered() {
+    // First, ask user to select a list or create a new one
+    auto listNames = db.getVocabLists();
+    QStringList lists;
+    for (const auto& name : listNames) {
+        lists.append(QString::fromStdString(name));
+    }
+    lists.append("[Create New List]");
+    
+    bool ok;
+    QString selectedList = QInputDialog::getItem(this, "Select List",
+                                                  "Import into which list?", lists, 0, false, &ok);
+    
+    if (!ok) return;
+    
+    int listID = -1;
+    if (selectedList == "[Create New List]") {
+        // Prompt for new list details
+        QString listName = QInputDialog::getText(this, "Create New List", "List name:", QLineEdit::Normal, "", &ok);
+        if (!ok || listName.isEmpty()) return;
+        
+        QString language = QInputDialog::getText(this, "Create New List", "Target language:", QLineEdit::Normal, "", &ok);
+        if (!ok) return;
+        
+        // Create the new list in database
+        try {
+            db.createNewList(listName.toStdString(), language.toStdString(), "Imported list");
+            listID = db.getListId(listName.toStdString());
+        } catch (const std::exception& e) {
+            QMessageBox::critical(this, "Error", "Failed to create list: " + QString::fromStdString(e.what()));
+            return;
+        }
+    } else {
+        // Get the ID of the selected list
+        listID = db.getListId(selectedList.toStdString());
+    }
+    
+    if (listID == -1) {
+        QMessageBox::critical(this, "Error", "Failed to determine list ID.");
+        return;
+    }
+    
+    // Open file dialog
+    QString fileName = QFileDialog::getOpenFileName(this, "Import Words",
+        QDir::homePath(),
+        "CSV Files (*.csv);;SQLite Database (*.db);;All Files (*)");
+    
+    if (fileName.isEmpty()) return;
+    
+    try {
+        if (fileName.endsWith(".csv", Qt::CaseInsensitive)) {
+            importFromCSV(fileName, listID);
+        } else if (fileName.endsWith(".db", Qt::CaseInsensitive)) {
+            importFromDB(fileName, listID);
+        } else {
+            // Try CSV first, then DB
+            QFileInfo info(fileName);
+            if (info.suffix().isEmpty()) {
+                QMessageBox::warning(this, "Warning", "Could not determine file type. Attempting to import as CSV.");
+                importFromCSV(fileName, listID);
+            } else {
+                QMessageBox::critical(this, "Error", "Unsupported file format. Please use CSV or SQLite DB files.");
+            }
+        }
+        
+        // Refresh the deck list and show success message
+        deckListPanel->updateDeckList();
+        QMessageBox::information(this, "Success", "Words have been imported successfully.");
+    } catch (const std::exception& e) {
+        QMessageBox::critical(this, "Import Error", QString::fromStdString(e.what()));
+    }
+}
+
+void MainWindow::importFromCSV(const QString& filePath, int listID) {
+    QFile file(filePath);
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        throw std::runtime_error("Cannot open file: " + filePath.toStdString());
+    }
+    
+    QTextStream in(&file);
+    int importedCount = 0;
+    int lineNumber = 0;
+    
+    // Detect delimiter from first line
+    QString firstLine;
+    if (!in.atEnd()) {
+        firstLine = in.readLine();
+    }
+    
+    // Detect delimiter by checking which is most common: comma, tab, semicolon, pipe
+    QChar delimiter = ',';
+    if (!firstLine.isEmpty()) {
+        int commaCount = firstLine.count(',');
+        int tabCount = firstLine.count('\t');
+        int semicolonCount = firstLine.count(';');
+        int pipeCount = firstLine.count('|');
+        
+        int maxCount = commaCount;
+        delimiter = ',';
+        
+        if (tabCount > maxCount) {
+            maxCount = tabCount;
+            delimiter = '\t';
+        }
+        if (semicolonCount > maxCount) {
+            maxCount = semicolonCount;
+            delimiter = ';';
+        }
+        if (pipeCount > maxCount) {
+            maxCount = pipeCount;
+            delimiter = '|';
+        }
+    }
+    
+    // Skip header row (line 1) and process remaining lines
+    while (!in.atEnd()) {
+        QString line = in.readLine();
+        lineNumber++;
+        
+        // Skip first line (header)
+        if (lineNumber == 1) continue;
+        
+        if (line.isEmpty()) continue;
+        
+        try {
+            processCSVLine(line, delimiter, listID, lineNumber);
+            importedCount++;
+        } catch (const std::exception& e) {
+            qWarning() << "Error importing word at line " << lineNumber << ": " << QString::fromStdString(e.what());
+            // Continue importing other words
+        }
+    }
+    
+    file.close();
+    
+    if (importedCount == 0) {
+        throw std::runtime_error("No words were imported. Check CSV format.");
+    }
+}
+
+void MainWindow::processCSVLine(const QString& line, QChar delimiter, int listID, int lineNumber) {
+    // Parse CSV line with proper quoted field handling
+    QStringList fields;
+    QString currentField;
+    bool inQuotes = false;
+    
+    for (int i = 0; i < line.length(); ++i) {
+        QChar c = line[i];
+        
+        if (c == '"') {
+            inQuotes = !inQuotes;
+        } else if (c == delimiter && !inQuotes) {
+            fields.append(currentField.trimmed());
+            currentField.clear();
+        } else {
+            currentField += c;
+        }
+    }
+    fields.append(currentField.trimmed());
+    
+    if (fields.isEmpty() || fields[0].isEmpty()) return;
+    
+    // Remove quotes from fields
+    QString word = fields[0].trimmed();
+    word.remove('"');
+    
+    QString definition = fields.size() > 1 ? fields[1].trimmed() : "";
+    definition.remove('"');
+    
+    QString partOfSpeech = fields.size() > 2 ? fields[2].trimmed() : "";
+    partOfSpeech.remove('"');
+    
+    if (word.isEmpty()) return;
+    
+    try {
+        db.addWordAndSetup(listID, word.toStdString(), 
+                          partOfSpeech.toStdString(), 
+                          definition.toStdString(), "");
+    } catch (const std::exception& e) {
+        throw e;
+    }
+}
+
+void MainWindow::importFromDB(const QString& filePath, int listID) {
+    // Open the source database
+    sqlite3* sourceDb = nullptr;
+    int rc = sqlite3_open(filePath.toStdString().c_str(), &sourceDb);
+    
+    if (rc != SQLITE_OK) {
+        throw std::runtime_error("Cannot open database file: " + filePath.toStdString());
+    }
+    
+    try {
+        // Query the words table from source database
+        sqlite3_stmt* stmt = nullptr;
+        const char* query = "SELECT word, definition, part_of_speech FROM words";
+        
+        rc = sqlite3_prepare_v2(sourceDb, query, -1, &stmt, nullptr);
+        if (rc != SQLITE_OK) {
+            throw std::runtime_error("Cannot query source database: " + std::string(sqlite3_errmsg(sourceDb)));
+        }
+        
+        int importedCount = 0;
+        while (sqlite3_step(stmt) == SQLITE_ROW) {
+            const char* word = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
+            const char* definition = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
+            const char* partOfSpeech = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 2));
+            
+            if (word) {
+                try {
+                    db.addWordAndSetup(listID, word,
+                                      partOfSpeech ? partOfSpeech : "",
+                                      definition ? definition : "",
+                                      "");
+                    importedCount++;
+                } catch (const std::exception& e) {
+                    qWarning() << "Error importing word: " << e.what();
+                    // Continue importing other words
+                }
+            }
+        }
+        
+        sqlite3_finalize(stmt);
+        
+        if (importedCount == 0) {
+            throw std::runtime_error("No words found in source database.");
+        }
+    } catch (...) {
+        sqlite3_close(sourceDb);
+        throw;
+    }
+    
+    sqlite3_close(sourceDb);
 }

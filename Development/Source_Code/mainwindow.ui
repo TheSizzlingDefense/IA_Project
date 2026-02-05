@@ -303,7 +303,7 @@
        <enum>Qt::Orientation::Vertical</enum>
       </property>
       <property name="sizeType">
-       <enum>QSizePolicy::Expanding</enum>
+       <enum>QSizePolicy::Policy::Expanding</enum>
       </property>
       <property name="sizeHint" stdset="0">
        <size>
@@ -376,6 +376,7 @@
     <property name="title">
      <string>File</string>
     </property>
+    <addaction name="actionImport"/>
    </widget>
    <widget class="QMenu" name="menuEdit">
     <property name="title">
@@ -404,6 +405,11 @@
    </property>
    <property name="text">
     <string>Dark Mode</string>
+   </property>
+  </action>
+  <action name="actionImport">
+   <property name="text">
+    <string>Import</string>
    </property>
   </action>
  </widget>
