@@ -745,7 +745,56 @@ int DataBase::getListId(const std::string& listName) {
 
 int DataBase::addOrGetWord(const std::string& word, const std::string& partOfSpeech, const std::string& definition, const std::string& language) {
     int existing = getWordId(word, language);
-    if (existing != -1) return existing;
+    if (existing != -1) {
+        // Word exists - update it with new definition and part of speech if provided (non-empty)
+        if (!definition.empty()) {
+            const char* sql = "UPDATE words SET definition = ? WHERE word_id = ?;";
+            sqlite3_stmt* stmt = nullptr;
+            int rc = sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr);
+            if (rc != SQLITE_OK) {
+                QString errorMsg = "Failed to prepare statement for updating word definition: " + QString::fromStdString(std::string(sqlite3_errmsg(db)));
+                qCritical() << errorMsg;
+                throw std::runtime_error(errorMsg.toStdString());
+            }
+            
+            sqlite3_bind_text(stmt, 1, definition.c_str(), -1, SQLITE_TRANSIENT);
+            sqlite3_bind_int(stmt, 2, existing);
+            
+            rc = sqlite3_step(stmt);
+            if (rc != SQLITE_DONE) {
+                sqlite3_finalize(stmt);
+                QString errorMsg = "Execution failed for updating word definition: " + QString::fromStdString(std::string(sqlite3_errmsg(db)));
+                qCritical() << errorMsg;
+                throw std::runtime_error(errorMsg.toStdString());
+            }
+            sqlite3_finalize(stmt);
+        }
+        
+        if (!partOfSpeech.empty()) {
+            const char* sql = "UPDATE words SET part_of_speech = ? WHERE word_id = ?;";
+            sqlite3_stmt* stmt = nullptr;
+            int rc = sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr);
+            if (rc != SQLITE_OK) {
+                QString errorMsg = "Failed to prepare statement for updating word part_of_speech: " + QString::fromStdString(std::string(sqlite3_errmsg(db)));
+                qCritical() << errorMsg;
+                throw std::runtime_error(errorMsg.toStdString());
+            }
+            
+            sqlite3_bind_text(stmt, 1, partOfSpeech.c_str(), -1, SQLITE_TRANSIENT);
+            sqlite3_bind_int(stmt, 2, existing);
+            
+            rc = sqlite3_step(stmt);
+            if (rc != SQLITE_DONE) {
+                sqlite3_finalize(stmt);
+                QString errorMsg = "Execution failed for updating word part_of_speech: " + QString::fromStdString(std::string(sqlite3_errmsg(db)));
+                qCritical() << errorMsg;
+                throw std::runtime_error(errorMsg.toStdString());
+            }
+            sqlite3_finalize(stmt);
+        }
+        
+        return existing;
+    }
 
     const char* sql = "INSERT INTO words (word, part_of_speech, definition, language, date_added) VALUES (?, ?, ?, ?, datetime('now'));";
     sqlite3_stmt* stmt = nullptr;

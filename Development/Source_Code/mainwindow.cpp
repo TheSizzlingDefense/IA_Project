@@ -409,19 +409,27 @@ void MainWindow::importFromCSV(const QString& filePath, int listID) {
     int importedCount = 0;
     int lineNumber = 0;
     
-    // Detect delimiter from first line
-    QString firstLine;
-    if (!in.atEnd()) {
-        firstLine = in.readLine();
+    // Read the entire file to handle multiline quoted fields
+    QString fullContent = in.readAll();
+    file.close();
+    
+    // Split into lines but we'll need to handle multiline quoted fields carefully
+    QStringList allLines = fullContent.split('\n');
+    
+    if (allLines.isEmpty()) {
+        throw std::runtime_error("CSV file is empty.");
     }
+    
+    // Detect delimiter from first line (header)
+    QString headerLine = allLines[0];
     
     // Detect delimiter by checking which is most common: comma, tab, semicolon, pipe
     QChar delimiter = ',';
-    if (!firstLine.isEmpty()) {
-        int commaCount = firstLine.count(',');
-        int tabCount = firstLine.count('\t');
-        int semicolonCount = firstLine.count(';');
-        int pipeCount = firstLine.count('|');
+    if (!headerLine.isEmpty()) {
+        int commaCount = headerLine.count(',');
+        int tabCount = headerLine.count('\t');
+        int semicolonCount = headerLine.count(';');
+        int pipeCount = headerLine.count('|');
         
         int maxCount = commaCount;
         delimiter = ',';
@@ -440,26 +448,55 @@ void MainWindow::importFromCSV(const QString& filePath, int listID) {
         }
     }
     
-    // Skip header row (line 1) and process remaining lines
-    while (!in.atEnd()) {
-        QString line = in.readLine();
-        lineNumber++;
+    // Process data lines, handling multiline quoted fields
+    QString currentRecord;
+    int recordLineNumber = 1;  // Line number of the record (for error reporting)
+    
+    for (int i = 1; i < allLines.size(); ++i) {
+        QString line = allLines[i];
         
-        // Skip first line (header)
-        if (lineNumber == 1) continue;
+        if (currentRecord.isEmpty()) {
+            recordLineNumber = i + 1;  // +1 because line numbers are 1-based
+        }
         
-        if (line.isEmpty()) continue;
+        currentRecord += line;
         
-        try {
-            processCSVLine(line, delimiter, listID, lineNumber);
-            importedCount++;
-        } catch (const std::exception& e) {
-            qWarning() << "Error importing word at line " << lineNumber << ": " << QString::fromStdString(e.what());
-            // Continue importing other words
+        // Check if we have a complete record (even number of quotes outside of escaped quotes)
+        int quoteCount = 0;
+        bool escaped = false;
+        for (int j = 0; j < currentRecord.length(); ++j) {
+            QChar c = currentRecord[j];
+            if (c == '"' && !escaped) {
+                quoteCount++;
+            }
+            escaped = (c == '"') && !escaped;  // Handle escaped quotes
+        }
+        
+        // If quote count is even, we have a complete record
+        if (quoteCount % 2 == 0 && !currentRecord.trimmed().isEmpty()) {
+            try {
+                processCSVLine(currentRecord, delimiter, listID, recordLineNumber);
+                importedCount++;
+            } catch (const std::exception& e) {
+                qWarning() << "Error importing word at line " << recordLineNumber << ": " << QString::fromStdString(e.what());
+                // Continue importing other words
+            }
+            currentRecord.clear();
+        } else if (quoteCount % 2 == 1) {
+            // Odd number of quotes - we're inside a multiline field, add newline back
+            currentRecord += '\n';
         }
     }
     
-    file.close();
+    // Handle any remaining record
+    if (!currentRecord.trimmed().isEmpty()) {
+        try {
+            processCSVLine(currentRecord, delimiter, listID, recordLineNumber);
+            importedCount++;
+        } catch (const std::exception& e) {
+            qWarning() << "Error importing word at line " << recordLineNumber << ": " << QString::fromStdString(e.what());
+        }
+    }
     
     if (importedCount == 0) {
         throw std::runtime_error("No words were imported. Check CSV format.");
@@ -467,7 +504,7 @@ void MainWindow::importFromCSV(const QString& filePath, int listID) {
 }
 
 void MainWindow::processCSVLine(const QString& line, QChar delimiter, int listID, int lineNumber) {
-    // Parse CSV line with proper quoted field handling
+    // Parse CSV line with proper quoted field handling (including multiline fields)
     QStringList fields;
     QString currentField;
     bool inQuotes = false;
@@ -481,6 +518,7 @@ void MainWindow::processCSVLine(const QString& line, QChar delimiter, int listID
             fields.append(currentField.trimmed());
             currentField.clear();
         } else {
+            // Preserve newlines and other characters within quoted fields
             currentField += c;
         }
     }
@@ -488,15 +526,24 @@ void MainWindow::processCSVLine(const QString& line, QChar delimiter, int listID
     
     if (fields.isEmpty() || fields[0].isEmpty()) return;
     
-    // Remove quotes from fields
+    // Remove quotes from fields and trim whitespace
     QString word = fields[0].trimmed();
     word.remove('"');
+    word = word.trimmed();
     
-    QString definition = fields.size() > 1 ? fields[1].trimmed() : "";
-    definition.remove('"');
+    QString definition = "";
+    if (fields.size() > 1) {
+        definition = fields[1].trimmed();
+        definition.remove('"');
+        definition = definition.trimmed();
+    }
     
-    QString partOfSpeech = fields.size() > 2 ? fields[2].trimmed() : "";
-    partOfSpeech.remove('"');
+    QString partOfSpeech = "";
+    if (fields.size() > 2) {
+        partOfSpeech = fields[2].trimmed();
+        partOfSpeech.remove('"');
+        partOfSpeech = partOfSpeech.trimmed();
+    }
     
     if (word.isEmpty()) return;
     
