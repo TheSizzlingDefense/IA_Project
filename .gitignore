@@ -74,6 +74,7 @@ CMakeLists.txt.user*
 *.exe
 
 *.csv
+*.drawio
 
 # Directories with generated files
 .moc/
