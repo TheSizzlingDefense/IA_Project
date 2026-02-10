@@ -93,14 +93,14 @@ void StudyPanel::showCurrentCard()
         ui->typingFeedbackLabel->setVisible(false);
         // hide choice buttons
         for (int i = 0; i < 4; ++i) choiceButtons[i]->setVisible(false);
-        // show rating buttons in flashcard mode but disable them until card is revealed
-        ui->againButton->setVisible(true);
+        // hide rating buttons in flashcard mode until card is revealed
+        ui->againButton->setVisible(false);
         ui->againButton->setEnabled(false);
-        ui->hardButton->setVisible(true);
+        ui->hardButton->setVisible(false);
         ui->hardButton->setEnabled(false);
-        ui->goodButton->setVisible(true);
+        ui->goodButton->setVisible(false);
         ui->goodButton->setEnabled(false);
-        ui->easyButton->setVisible(true);
+        ui->easyButton->setVisible(false);
         ui->easyButton->setEnabled(false);
     } else if (studyMode == StudyMode::MultipleChoice) {
         // Multiple choice mode
@@ -270,11 +270,17 @@ void StudyPanel::onReveal()
     ui->studyDefinitionLabel->setVisible(true);
     ui->additionalInfoBox->setVisible(true);
     ui->revealButton->setEnabled(false);
-    // Enable rating buttons after revealing the card
-    ui->againButton->setEnabled(true);
-    ui->hardButton->setEnabled(true);
-    ui->goodButton->setEnabled(true);
-    ui->easyButton->setEnabled(true);
+    // Show and enable rating buttons after revealing the card (in flashcard mode)
+    if (studyMode == StudyMode::Flashcard) {
+        ui->againButton->setVisible(true);
+        ui->againButton->setEnabled(true);
+        ui->hardButton->setVisible(true);
+        ui->hardButton->setEnabled(true);
+        ui->goodButton->setVisible(true);
+        ui->goodButton->setEnabled(true);
+        ui->easyButton->setVisible(true);
+        ui->easyButton->setEnabled(true);
+    }
 }
 
 void StudyPanel::onRateAgain() { applyRating(0); }
