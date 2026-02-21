@@ -55,6 +55,7 @@ private:
     void importFromCSV(const QString& filePath, int listID);
     void importFromDB(const QString& filePath, int listID);
     void processCSVLine(const QString& line, QChar delimiter, int listID, int lineNumber);
+    QString getApplicationDataPath(const QString& filename);
     
     Ui::MainWindow *ui;
 

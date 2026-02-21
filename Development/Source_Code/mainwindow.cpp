@@ -16,6 +16,8 @@
 #include <QTableWidget>
 #include <QTableWidgetItem>
 #include <QHeaderView>
+#include <QStandardPaths>
+#include <QDir>
 #include <sstream>
 #include <random>
 #include <algorithm>
@@ -23,7 +25,7 @@
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
-    , db("/home/brometheus/IA_Project/data/example.db")
+    , db(getApplicationDataPath("vocabulary.db").toStdString())
 {
     ui->setupUi(this);
     
@@ -604,6 +606,10 @@ void MainWindow::importFromDB(const QString& filePath, int listID) {
         sqlite3_close(sourceDb);
         throw;
     }
-    
-    sqlite3_close(sourceDb);
+}
+
+QString MainWindow::getApplicationDataPath(const QString& filename) {
+    QString appDataPath = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
+    QDir().mkpath(appDataPath);
+    return appDataPath + "/" + filename;
 }
