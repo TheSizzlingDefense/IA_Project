@@ -353,6 +353,14 @@ bool DataBase::createWordRelationTable() {
 }
 
 bool DataBase::createNewList(std::string listName, std::string targetLanguage = "", std::string description = "") {
+    // Check if list with this name already exists
+    int existingListId = getListId(listName);
+    if (existingListId != -1) {
+        QString errorMsg = "A vocabulary list with the name '" + QString::fromStdString(listName) + "' already exists.";
+        qWarning() << errorMsg;
+        throw std::runtime_error(errorMsg.toStdString());
+    }
+
     const char* sql = "INSERT INTO vocabulary_lists (list_name, description, language, date_created) VALUES (?, ?, ?, datetime('now'));";
 
     sqlite3_stmt* stmt;

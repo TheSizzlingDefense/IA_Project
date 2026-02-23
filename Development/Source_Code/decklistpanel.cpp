@@ -102,10 +102,3 @@ void DeckListPanel::onDeckItemDoubleClicked(QTableWidgetItem* item)
     
     emit deckDoubleClicked(deckName, listID);
 }
-
-void DeckListPanel::applyTheme(bool isDarkMode)
-{
-    // Theme is handled by the parent MainWindow's stylesheet
-    // This method is here for future customizations if needed
-    Q_UNUSED(isDarkMode);
-}

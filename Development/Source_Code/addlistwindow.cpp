@@ -1,6 +1,6 @@
 #include "addlistwindow.h"
 #include "ui_addlistwindow.h"
-#include "themeutils.h"
+#include <QMessageBox>
 
 AddListWindow::AddListWindow(QWidget *parent, DataBase* dataBase)
     : QDialog(parent)
@@ -14,18 +14,25 @@ AddListWindow::~AddListWindow() {
     delete ui;
 }
 
-void AddListWindow::applyTheme(bool isDark) {
-    setStyleSheet(isDark ? ThemeUtils::getDarkTheme() : ThemeUtils::getLightTheme());
-}
-
 void AddListWindow::on_cancelCreation_clicked() {
     reject();
 }
 
 
 void AddListWindow::on_createList_clicked() {
-    db->createNewList(ui->listNameInput->text().toStdString(), ui->languageInput->text().toStdString(), ui->descriptionInput->toPlainText().toStdString());
-    emit newAddedList();
-    reject();
+    QString listName = ui->listNameInput->text().trimmed();
+    
+    if (listName.isEmpty()) {
+        QMessageBox::warning(this, "Empty List Name", "Please enter a name for the vocabulary list.");
+        return;
+    }
+    
+    try {
+        db->createNewList(listName.toStdString(), ui->languageInput->text().toStdString(), ui->descriptionInput->toPlainText().toStdString());
+        emit newAddedList();
+        reject();
+    } catch (const std::exception& ex) {
+        QMessageBox::critical(this, "Error Creating List", QString::fromStdString(ex.what()));
+    }
 }
 

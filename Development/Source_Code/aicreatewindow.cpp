@@ -1,6 +1,5 @@
 #include "aicreatewindow.h"
 #include "ui_aicreatewindow.h"
-#include "themeutils.h"
 #include <QNetworkRequest>
 #include <QNetworkReply>
 #include <QJsonDocument>
@@ -11,6 +10,7 @@
 #include <QUrl>
 #include <QByteArray>
 #include <QDebug>
+#include <QRegularExpression>
 #include <cstdlib>
 
 AICreateWindow::AICreateWindow(QWidget* parent, DataBase* db_)
@@ -24,17 +24,10 @@ AICreateWindow::AICreateWindow(QWidget* parent, DataBase* db_)
 
     manager = new QNetworkAccessManager(this);
     connect(manager, &QNetworkAccessManager::finished, this, &AICreateWindow::onNetworkReplyFinished);
-
-    // explicitly connect generate button to slot
-    connect(ui->generateButton, &QPushButton::clicked, this, &AICreateWindow::on_generateButton_clicked);
 }
 
 AICreateWindow::~AICreateWindow() {
     delete ui;
-}
-
-void AICreateWindow::applyTheme(bool isDark) {
-    setStyleSheet(isDark ? ThemeUtils::getDarkTheme() : ThemeUtils::getLightTheme());
 }
 
 static QString fetchApiKeyInteractive(QWidget* parent) {
@@ -75,17 +68,17 @@ void AICreateWindow::on_generateButton_clicked() {
     QJsonArray messages;
     QJsonObject systemMsg;
     systemMsg["role"] = "system";
-    systemMsg["content"] = "You are a helpful assistant that outputs JSON only."
-                         " When asked, produce a JSON array of objects with keys 'word' and 'definition'.";
+    systemMsg["content"] = "You are a JSON-only assistant. You must respond with ONLY valid JSON and nothing else. "
+                         "No markdown, no code blocks, no explanations. Just the raw JSON array.";
     messages.append(systemMsg);
 
     QJsonObject userMsg;
     userMsg["role"] = "user";
     QString userRequest = QString("Generate %1 vocabulary entries for a list named '%2'. "
-                                  "Return ONLY a JSON array like [{\"word\": \"...\", \"definition\": \"...\"}, ...].\n")
+                                  "Return ONLY a valid JSON array with no markdown or code blocks: [{\"word\": \"...\", \"definition\": \"...\"}, ...]\n")
                           .arg(count).arg(listName);
     if (!customPrompt.isEmpty()) {
-        userRequest += "Additional instructions: \n" + customPrompt + "\n";
+        userRequest += "Additional instructions: " + customPrompt + "\n";
     }
     userMsg["content"] = userRequest;
     messages.append(userMsg);
@@ -150,22 +143,43 @@ void AICreateWindow::onNetworkReplyFinished(QNetworkReply* reply) {
         return;
     }
 
-    // Try to parse textContent as JSON array
-    QJsonDocument listDoc = QJsonDocument::fromJson(textContent.toUtf8());
+    // Log the raw response for debugging
+    qDebug() << "Raw AI response:" << textContent;
+
+    // Clean up the response: remove markdown code blocks and extra whitespace
+    QString cleanedContent = textContent;
+    
+    // Remove markdown code block markers (handles variations like ```json, ``` etc)
+    cleanedContent.replace(QRegularExpression("```[a-zA-Z]*\\s*"), "");
+    cleanedContent.replace("```", "");
+    
+    // Remove any leading/trailing whitespace
+    cleanedContent = cleanedContent.trimmed();
+
+    // Try to parse as JSON array directly
+    QJsonDocument listDoc = QJsonDocument::fromJson(cleanedContent.toUtf8());
+    
     if (listDoc.isNull()) {
         // Attempt to extract a JSON substring from the response
-        QByteArray b = textContent.toUtf8();
+        // Find the first '[' and last ']' to extract the JSON array
+        QByteArray b = cleanedContent.toUtf8();
         int start = b.indexOf('[');
         int end = b.lastIndexOf(']');
+        
         if (start >= 0 && end > start) {
             QByteArray sub = b.mid(start, end - start + 1);
             listDoc = QJsonDocument::fromJson(sub);
+            
+            if (!listDoc.isNull()) {
+                qDebug() << "Successfully extracted JSON array from response";
+            }
         }
     }
 
     if (listDoc.isNull() || !listDoc.isArray()) {
-        qCritical() << "Could not parse OpenAI model output as JSON array. Response:" << textContent;
-        QMessageBox::critical(this, "Parse Error", "Could not parse the model output as a JSON array.\nResponse:\n" + textContent);
+        qCritical() << "Could not parse OpenAI model output as JSON array.";
+        qCritical() << "Cleaned response:" << cleanedContent;
+        QMessageBox::critical(this, "Parse Error", "Could not parse the model output as a JSON array.\n\nResponse:\n" + cleanedContent.left(500));
         return;
     }
 
@@ -178,16 +192,8 @@ void AICreateWindow::onNetworkReplyFinished(QNetworkReply* reply) {
     // Create the new list in the DB
     QString listName = ui->listNameEdit->text().trimmed();
     try {
-        bool ok = db->createNewList(listName.toStdString(), std::string(""), std::string("Created by AI"));
-        if (!ok) {
-            qCritical() << "Failed to create new list:" << listName;
-            throw std::runtime_error("Failed to create new list.");
-        }
+        db->createNewList(listName.toStdString(), std::string(""), std::string("Created by AI"));
         int listID = db->getListId(listName.toStdString());
-        if (listID < 0) {
-            qCritical() << "Failed to create or retrieve new list id for AI-generated list:" << listName;
-            throw std::runtime_error("Failed to create or retrieve new list id.");
-        }
 
         int added = 0;
         for (const QJsonValue &v : arr) {

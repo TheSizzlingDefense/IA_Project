@@ -1,6 +1,5 @@
 #include "addcardwindow.h"
 #include "ui_addcardwindow.h"
-#include "themeutils.h"
 #include <QMessageBox>
 #include <QRegularExpression>
 #include <QDebug>
@@ -34,10 +33,6 @@ void AddCardWindow::on_toggleAdditionalOptionsButton_toggled(bool checked) {
         ui->toggleAdditionalOptionsButton->setText("▶ Additional Options");
         ui->additionalOptionsBox->setVisible(false);
     }
-}
-
-void AddCardWindow::applyTheme(bool isDark) {
-    this->setStyleSheet(isDark ? ThemeUtils::getDarkTheme() : ThemeUtils::getLightTheme());
 }
 
 void AddCardWindow::on_cancelAdding_clicked() {

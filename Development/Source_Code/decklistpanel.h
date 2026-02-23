@@ -18,7 +18,6 @@ public:
     ~DeckListPanel();
 
     void updateDeckList();
-    void applyTheme(bool isDarkMode);
 
 signals:
     void deckDoubleClicked(const QString& deckName, int listID);

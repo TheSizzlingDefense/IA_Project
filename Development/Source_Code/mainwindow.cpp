@@ -3,7 +3,6 @@
 #include "addcardwindow.h"
 #include "addlistwindow.h"
 #include "aicreatewindow.h"
-#include "themeutils.h"
 #include <QDialog>
 #include <QVBoxLayout>
 #include <QTextEdit>
@@ -48,9 +47,6 @@ MainWindow::MainWindow(QWidget *parent)
     
     // Initial visibility - show only deck list on startup
     showDeckList();
-    
-    // Apply initial theme (light mode by default)
-    applyLightTheme();
 }
 
 MainWindow::~MainWindow() {
@@ -59,7 +55,6 @@ MainWindow::~MainWindow() {
 
 void MainWindow::on_addWord_clicked() {
     AddCardWindow addCardWindow{nullptr, &db};
-    addCardWindow.applyTheme(isDarkMode);
     addCardWindow.setModal(true);
     addCardWindow.exec();
 }
@@ -69,7 +64,6 @@ void MainWindow::on_createDeck_clicked() {
     QObject::connect(&addListWindow, &AddListWindow::newAddedList, this, [this]() {
         deckListPanel->updateDeckList();
     });
-    addListWindow.applyTheme(isDarkMode);
     addListWindow.setModal(true);
     addListWindow.exec();
 }
@@ -170,7 +164,6 @@ void MainWindow::onViewAll(int listID) {
     // Create a dialog with a table widget
     QDialog dlg(this);
     dlg.setWindowTitle("All Words - " + listName);
-    dlg.setStyleSheet(isDarkMode ? ThemeUtils::getDarkTheme() : ThemeUtils::getLightTheme());
     dlg.resize(900, 500);
     
     QVBoxLayout* layout = new QVBoxLayout(&dlg);
@@ -258,7 +251,6 @@ void MainWindow::on_listDecks_clicked() {
 
 void MainWindow::on_aiCreate_clicked() {
     AICreateWindow dlg(this, &db);
-    dlg.applyTheme(isDarkMode);
     dlg.setModal(true);
     dlg.exec();
     // after creation, refresh list view in case a new list was created
@@ -293,29 +285,12 @@ void MainWindow::showStudyPanel() {
 }
 
 void MainWindow::on_actionToggleDarkMode_triggered(bool checked) {
-    isDarkMode = checked;
-    if (isDarkMode) {
-        applyDarkTheme();
-    } else {
-        applyLightTheme();
-    }
-    
-    // Apply theme to panels
-    deckListPanel->applyTheme(isDarkMode);
-}
-
-void MainWindow::applyLightTheme() {
-    this->setStyleSheet(ThemeUtils::getLightTheme());
-}
-
-void MainWindow::applyDarkTheme() {
-    this->setStyleSheet(ThemeUtils::getDarkTheme());
+    // Theme toggle removed - keeping light mode only
 }
 
 void MainWindow::showTextDialog(const QString& title, const QString& text, int width, int height) {
     QDialog dlg(this);
     dlg.setWindowTitle(title);
-    dlg.setStyleSheet(isDarkMode ? ThemeUtils::getDarkTheme() : ThemeUtils::getLightTheme());
     
     QVBoxLayout* layout = new QVBoxLayout(&dlg);
     QTextEdit* view = new QTextEdit(&dlg);

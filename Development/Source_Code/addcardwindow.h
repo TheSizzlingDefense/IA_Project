@@ -15,7 +15,6 @@ class AddCardWindow : public QDialog
 public:
     explicit AddCardWindow(QWidget *parent = nullptr, DataBase* dataBase = nullptr);
     ~AddCardWindow();
-    void applyTheme(bool isDark);
 
 private slots:
     void on_cancelAdding_clicked();

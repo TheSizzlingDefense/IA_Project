@@ -49,8 +49,6 @@ private:
     void showDeckList();
     void showModePanel();
     void showStudyPanel();
-    void applyLightTheme();
-    void applyDarkTheme();
     void showTextDialog(const QString& title, const QString& text, int width = 480, int height = 320);
     void importFromCSV(const QString& filePath, int listID);
     void importFromDB(const QString& filePath, int listID);
@@ -65,7 +63,5 @@ private:
     DeckListPanel* deckListPanel;
     ModeSelectorPanel* modeSelectorPanel;
     StudyPanel* studyPanel;
-    
-    bool isDarkMode = false;
 };
 #endif // MAINWINDOW_H
